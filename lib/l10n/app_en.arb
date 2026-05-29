@@ -1,0 +1,7 @@
+{
+    "logIngredient" : "Log ingredient to nutrition diary",
+    "@logIngredient" : {
+        "description" : "no description (realflutter)"
+    },
+    "ingredientLogged" : "Ingredient logged to diary"
+}

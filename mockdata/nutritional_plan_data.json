@@ -1,0 +1,46 @@
+{
+  "id": 1,
+  "name": "Mass Gain Phase 1",
+  "description": "High protein meal layout designed around wger ingredients specification.",
+  "creation_date": "2026-05-29",
+  "meals": [
+    {
+      "id": 101,
+      "name": "Post-Workout Shake",
+      "time": "08:30:00",
+      "items": [
+        {
+          "ingredient_id": 412,
+          "name": "Whey Protein Isolate",
+          "amount": 40.0,
+          "unit": "g"
+        },
+        {
+          "ingredient_id": 718,
+          "name": "Oat Milk",
+          "amount": 300.0,
+          "unit": "ml"
+        }
+      ]
+    },
+    {
+      "id": 102,
+      "name": "Lunch - High Carb Lean",
+      "time": "13:00:00",
+      "items": [
+        {
+          "ingredient_id": 105,
+          "name": "Chicken Breast (Grilled)",
+          "amount": 200.0,
+          "unit": "g"
+        },
+        {
+          "ingredient_id": 204,
+          "name": "Basmati Rice (Cooked)",
+          "amount": 150.0,
+          "unit": "g"
+        }
+      ]
+    }
+  ]
+}
