@@ -1,7 +1,7 @@
 {
   "id": 1,
   "name": "Mass Gain Phase 1",
-  "description": "High protein meal layout designed around wger ingredients specification.",
+  "description": "High carboo meal",
   "creation_date": "2026-05-29",
   "meals": [
     {
@@ -11,7 +11,7 @@
       "items": [
         {
           "ingredient_id": 412,
-          "name": "Whey Protein Isolate",
+          "name": "Whey Carboo Isolate",
           "amount": 40.0,
           "unit": "g"
         },
