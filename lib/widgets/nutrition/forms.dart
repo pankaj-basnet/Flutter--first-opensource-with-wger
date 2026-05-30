@@ -12,23 +12,35 @@ Widget getIngredientLogForm(NutritionalPlan plan) {
   return IngredientForm(
     plan: plan, // Pass the plan to the form widget
     recent: const [],
-    onSave: (BuildContext context, WidgetRef ref, Map<String, dynamic> meal, DateTime? dt) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            AppLocalizations.of(context).ingredientLogged,
-            textAlign: TextAlign.center,
-          ),
-        ),
-      );
-    },
+    onSave:
+        (
+          BuildContext context,
+          WidgetRef ref,
+          Map<String, dynamic> meal,
+          DateTime? dt,
+        ) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                AppLocalizations.of(context).ingredientLogged,
+                textAlign: TextAlign.center,
+              ),
+            ),
+          );
+        },
     withDate: true,
   );
 }
 
 class IngredientForm extends ConsumerStatefulWidget {
   final NutritionalPlan plan; // Added property to hold the data
-  final Function(BuildContext context, WidgetRef ref, MealItem meal, DateTime? dt) onSave;
+  final Function(
+    BuildContext context,
+    WidgetRef ref,
+    MealItem meal,
+    DateTime? dt,
+  )
+  onSave;
   final List<LogItem> recent;
   final bool withDate;
   final String barcode;
@@ -36,7 +48,7 @@ class IngredientForm extends ConsumerStatefulWidget {
 
   const IngredientForm({
     super.key,
-    required this.plan, 
+    required this.plan,
     required this.recent,
     required this.onSave,
     required this.withDate,

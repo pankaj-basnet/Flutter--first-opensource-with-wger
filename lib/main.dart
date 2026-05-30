@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:realflutter/l10n/generated/app_localizations.dart';
 import 'package:realflutter/widgets/nutrition/forms.dart';
 
 void main() {
@@ -10,10 +11,9 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // 1. Fixed GitHub URL to point to raw content, not HTML web view
-  // 2. Moved the logic outside of the build method so it doesn't re-create unnecessarily
   Future<NutritionalPlan> getDataFromGithub() async {
-    const url = 'https://raw.githubusercontent.com/pankaj-basnet/Flutter--first-opensource-with-wger/main/mockdata/nutritional_plan_data.json';
+    const url =
+        'https://raw.githubusercontent.com/pankaj-basnet/Flutter--first-opensource-with-wger/main/mockdata/nutritional_plan_data.json';
 
     try {
       final response = await http.get(Uri.parse(url));
@@ -22,7 +22,9 @@ class MyApp extends StatelessWidget {
         final data = jsonDecode(response.body);
         return data as NutritionalPlan;
       } else {
-        throw Exception('Failed to load nutritional plan. Status: ${response.statusCode}');
+        throw Exception(
+          'Failed to load nutritional plan. Status: ${response.statusCode}',
+        );
       }
     } catch (e) {
       throw Exception('Network or parsing error: $e');
@@ -33,8 +35,10 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Flutter Demo',
-      theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple)),
-      // 3. Using FutureBuilder to orchestrate the asynchronous call safely
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+      ),
+      locale: const Locale('fr'),
       home: FutureBuilder<NutritionalPlan>(
         future: getDataFromGithub(),
         builder: (context, snapshot) {
@@ -47,15 +51,14 @@ class MyApp extends StatelessWidget {
               body: Center(child: Text('Error: ${snapshot.error}')),
             );
           } else if (snapshot.hasData) {
-            // Data successfully received! Pass it down.
             return getIngredientLogForm(snapshot.data!);
           } else {
-            return const Scaffold(
-              body: Center(child: Text('No data found.')),
-            );
+            return const Scaffold(body: Center(child: Text('No data found.')));
           }
         },
       ),
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
     );
   }
 }
