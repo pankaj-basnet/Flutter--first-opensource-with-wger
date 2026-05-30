@@ -1,0 +1,7 @@
+{
+    "logIngredient" : "Logee ingredientee to nutrition diary",
+    "@logIngredient" : {
+        "description" : "noee descriptionee (realflutter)"
+    },
+    "ingredientLogged" : "Ingredientee loggedee to diary"
+}
