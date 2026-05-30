@@ -1,23 +1,20 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:http/http.dart' as http;
-import 'package:realflutter/l10n/generated/app_localizations.dart';
 import 'package:realflutter/widgets/nutrition/forms.dart';
 
 void main() {
-  // ProviderScope is required for Riverpod
-  runApp(const ProviderScope(child: MyApp()));
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
+  // 1. Fixed GitHub URL to point to raw content, not HTML web view
+  // 2. Moved the logic outside of the build method so it doesn't re-create unnecessarily
   Future<NutritionalPlan> getDataFromGithub() async {
     const url = 'https://raw.githubusercontent.com/pankaj-basnet/Flutter--first-opensource-with-wger/main/mockdata/nutritional_plan_data.json';
-    // const url = 'http://127.0.0.1:5500/nutritional_plan_data.json';
-    // const url = 'http://192.168.1.83:5500/nutritional_plan_data.json';
+
     try {
       final response = await http.get(Uri.parse(url));
 
@@ -25,9 +22,7 @@ class MyApp extends StatelessWidget {
         final data = jsonDecode(response.body);
         return data as NutritionalPlan;
       } else {
-        throw Exception(
-          'Failed to load nutritional plan. Status: ${response.statusCode}',
-        );
+        throw Exception('Failed to load nutritional plan. Status: ${response.statusCode}');
       }
     } catch (e) {
       throw Exception('Network or parsing error: $e');
@@ -38,20 +33,8 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Flutter Demo',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-      ),
-
-      // Localization delegates to prevent null errors in the UI
-      localizationsDelegates: const [
-        AppLocalizations.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      supportedLocales: const [Locale('en', '')],
-
-      // The FutureBuilder is now active and orchestrating the data fetch!
+      theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple)),
+      // 3. Using FutureBuilder to orchestrate the asynchronous call safely
       home: FutureBuilder<NutritionalPlan>(
         future: getDataFromGithub(),
         builder: (context, snapshot) {
@@ -64,10 +47,12 @@ class MyApp extends StatelessWidget {
               body: Center(child: Text('Error: ${snapshot.error}')),
             );
           } else if (snapshot.hasData) {
-            // Data successfully received! Pass it directly into the form widget.
-            return getIngredientLogForm(plan: snapshot.data!);
+            // Data successfully received! Pass it down.
+            return getIngredientLogForm(snapshot.data!);
           } else {
-            return const Scaffold(body: Center(child: Text('No data found.')));
+            return const Scaffold(
+              body: Center(child: Text('No data found.')),
+            );
           }
         },
       ),

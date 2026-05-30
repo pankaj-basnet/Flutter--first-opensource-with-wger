@@ -1,8 +1,3 @@
-## App Preview
-<img src="assets/screenshot.png" alt="Flutter App UI" width="300"/>
-
----
-
 Here is the modified `README.md`. Changes have been kept to an absolute minimum, only updating the project name to **`realflutter`** and fixing the broken Markdown links/formatting so it aligns perfectly with your exact repo structure.
 
 ---
