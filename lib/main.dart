@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:realflutter/l10n/generated/app_localizations.dart';
+import 'package:realflutter/theme/theme.dart';
 import 'package:realflutter/widgets/nutrition/forms.dart';
 
 void main() {
@@ -34,11 +35,9 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-      ),
-      locale: const Locale('fr'),
+      title: 'RealFlutter',
+      theme: rfLightTheme,
+      // fontFamily: 'GoogleSans',
       home: FutureBuilder<NutritionalPlan>(
         future: getDataFromGithub(),
         builder: (context, snapshot) {

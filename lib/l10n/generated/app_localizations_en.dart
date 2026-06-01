@@ -13,4 +13,19 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get ingredientLogged => 'Ingredient logged to diary';
+
+  @override
+  String get weight => 'Weight';
+
+  @override
+  String get date => 'Date';
+
+  @override
+  String get time => 'Time';
+
+  @override
+  String get recentIngredients => 'Recently Used ingredients';
+
+  @override
+  String get noEntries => 'No matching items found';
 }

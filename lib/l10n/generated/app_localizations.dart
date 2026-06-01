@@ -109,6 +109,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Ingredient logged to diary'**
   String get ingredientLogged;
+
+  /// No description provided for @weight.
+  ///
+  /// In en, this message translates to:
+  /// **'Weight'**
+  String get weight;
+
+  /// No description provided for @date.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get date;
+
+  /// No description provided for @time.
+  ///
+  /// In en, this message translates to:
+  /// **'Time'**
+  String get time;
+
+  /// No description provided for @recentIngredients.
+  ///
+  /// In en, this message translates to:
+  /// **'Recently Used ingredients'**
+  String get recentIngredients;
+
+  /// No description provided for @noEntries.
+  ///
+  /// In en, this message translates to:
+  /// **'No matching items found'**
+  String get noEntries;
 }
 
 class _AppLocalizationsDelegate
