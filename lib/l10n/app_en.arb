@@ -3,5 +3,10 @@
     "@logIngredient" : {
         "description" : "no description (realflutter)"
     },
-    "ingredientLogged" : "Ingredient logged to diary"
+    "ingredientLogged" : "Ingredient logged to diary",
+    "weight": "Weight",
+    "date": "Date",
+    "time": "Time",
+    "recentIngredients": "Recently Used ingredients",
+    "noEntries": "No matching items found"
 }

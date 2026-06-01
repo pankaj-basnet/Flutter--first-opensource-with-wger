@@ -3,5 +3,10 @@
     "@logIngredient" : {
         "description" : "noee descriptionee (realflutter)"
     },
-    "ingredientLogged" : "Ingredientee loggedee to diary"
+    "ingredientLogged" : "Ingredientee loggedee to diary",
+    "weight": "Weight",
+    "date": "Date",
+    "time": "Time",
+    "recentIngredients": "Recently Used ingredients - french lang (app_fr.arb)",
+    "noEntries": "No matching items foundeee (fr)"
 }
