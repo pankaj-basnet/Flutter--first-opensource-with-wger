@@ -13,4 +13,20 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get ingredientLogged => 'Ingredientee loggedee to diary';
+
+  @override
+  String get weight => 'Weight';
+
+  @override
+  String get date => 'Date';
+
+  @override
+  String get time => 'Time';
+
+  @override
+  String get recentIngredients =>
+      'Recently Used ingredients - french lang (app_fr.arb)';
+
+  @override
+  String get noEntries => 'No matching items foundeee (fr)';
 }
