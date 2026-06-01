@@ -16,6 +16,8 @@ It serves as the flagship mobile/web frontend implementation for the `first-open
 
 For more information on how this works with other [frontends/backends], head over to the [first-opensource-wger-devs Spec Repo](https://www.google.com/search?q=https://github.com/pankaj-basnet/Flutter--first-opensource-with-wger).
 
+- RealWorld's [backend implementations](https://docs.realworld.show/specifications/backend/introduction/) adhere to their own specific [API spec](https://github.com/realworld-apps/realworld/tree/main/specs/api). The full API is described in the [OpenAPI spec]https://github.com/realworld-apps/realworld/blob/main/specs/api/openapi.yml.
+
 #### About first-opensource-wger-devs Clones
 
 The goal of this initiative is to create over 10 independent implementations of the same project schema (5 frontends for web/mobile, 5 backends for web/mobile). All clients and servers are completely plug-and-play interchangeable as they rigidly adhere to a singular, customized API specification modeled after the legendary [RealWorld Spec](https://www.google.com/search?q=https://docs.realworld.show/specifications).
@@ -103,3 +105,12 @@ If you would like to contribute, please check open issues or follow these guidel
 ## License
 
 This project is open-source and released under the [MIT License]().
+
+
+
+## Development Progress & Commit History
+
+| SN | Screenshot A | Commit A | Screenshot B | Commit B |
+| :--- | :--- | :--- | :--- | :--- |
+| **1** | [ <img src="assets/readme/screenshot1.png" width="120"/> ](https://github.com/pankaj-basnet/Flutter--first-opensource-with-wger/commit/6d0edb72da7b32468218c521fcec9ac8116ed0f8) | `6d0edb7`<br>• **Action:** Setup flutter project and Integrate `http` package to fetch GitHub JSON payload.<br>• **Result:** Initial UI successfully renders live-fetched nutritional plan data. | <img src="assets/readme/s3-ingredientFormScreen.png" width="120"/> | `e2558d5`<br>• Merged ingredient log   form<br>•  Next feature description |
+| **2** | <img src="assets/readme/screenshot3.png" width="120"/> | `353dbe4`<br>• Next feature description<br>• Next feature description | <img src="assets/readme/screenshot4.png" width="120"/> | `[Hash]`<br>• Next feature description |
