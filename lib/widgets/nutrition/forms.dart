@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:realflutter/l10n/generated/app_localizations.dart';
@@ -18,12 +17,11 @@ Widget getIngredientLogForm(NutritionalPlan plan) {
           Map<String, dynamic> meal,
           DateTime? dt,
         ) {
+          final i18n = AppLocalizations.of(context);
+
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(
-                AppLocalizations.of(context).ingredientLogged,
-                textAlign: TextAlign.center,
-              ),
+              content: Text(i18n.ingredientLogged, textAlign: TextAlign.center),
             ),
           );
         },
@@ -52,7 +50,7 @@ class IngredientForm extends ConsumerStatefulWidget {
     required this.recent,
     required this.onSave,
     required this.withDate,
-    this.barcode = '', // wger's ingredient barcode scanner
+    this.barcode = '',
     this.test = false,
   });
 
@@ -61,14 +59,22 @@ class IngredientForm extends ConsumerStatefulWidget {
 }
 
 class IngredientFormState extends ConsumerState<IngredientForm> {
-  final _form = GlobalKey<FormState>();
-  final _ingredientIdController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
 
-  TextEditingController get ingredientIdController => _ingredientIdController;
-  late MealItem _localMealItem;
+  final _ingredientController = TextEditingController();
+  final _ingredientIdController = TextEditingController();
+  final _amountController = TextEditingController();
+  final _dateController = TextEditingController();
+  final _timeController = TextEditingController();
+
+  DateTime _date = DateTime.now();
+  TimeOfDay _time = TimeOfDay.now();
 
   MealItem get mealItem => _localMealItem;
   String _searchQuery = '';
+
+  TextEditingController get ingredientIdController => _ingredientIdController;
+  late MealItem _localMealItem;
 
   @override
   void initState() {
@@ -81,17 +87,67 @@ class IngredientFormState extends ConsumerState<IngredientForm> {
       'weight_unit_id': null,
       'ingredient_name': '',
     };
+
+    _synchronizeDateDisplay();
+    _synchronizeTimeDisplay();
+  }
+
+  @override
+  void dispose() {
+    _ingredientController.dispose();
+    _ingredientIdController.dispose();
+    _amountController.dispose();
+    _dateController.dispose();
+    _timeController.dispose();
+    super.dispose();
+  }
+
+  void _synchronizeDateDisplay() {
+    _dateController.text =
+        '${_date.year}-${_date.month.toString().padLeft(2, '0')}-${_date.day.toString().padLeft(2, '0')}';
+  }
+
+  void _synchronizeTimeDisplay() {
+    _timeController.text =
+        '${_time.hour.toString().padLeft(2, '0')}:${_time.minute.toString().padLeft(2, '0')}';
+  }
+
+  void updateSearchQuery(String query) {
+    setState(() {
+      _searchQuery = query;
+    });
+  }
+
+  void selectIngredient(Map<String, dynamic> ingredient, num? amount) {
+    setState(() {
+      _localMealItem['ingredient_id'] = ingredient['id'];
+      _localMealItem['ingredient_name'] = ingredient['name'];
+      _ingredientController.text = ingredient['name'] ?? '';
+      _ingredientIdController.text = (ingredient['id'] ?? '').toString();
+
+      if (amount != null) {
+        _amountController.text = amount.toStringAsFixed(0);
+        _localMealItem['amount'] = amount.toDouble();
+      }
+    });
+  }
+
+  void unSelectIngredient() {
+    setState(() {
+      _localMealItem['ingredient_id'] = 0;
+      _ingredientIdController.text = '';
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    final planData = widget.plan;
-
+    final theme = Theme.of(context);
     final i18n = AppLocalizations.of(context);
-    final pcolor = Theme.of(context).colorScheme.onPrimary;
 
-    final appBarBackground = Theme.of(context).colorScheme.primary;
-    final appBarForeground = Theme.of(context).colorScheme.onPrimary;
+    final themeText = Theme.of(context).textTheme;
+    final titleMediumBoldTheme = themeText.titleMedium?.copyWith(
+      fontWeight: FontWeight.bold,
+    );
 
     // Hardcoded layout properties for testing component behavior
     const String staticUnitLabel = 'g';
@@ -103,7 +159,7 @@ class IngredientFormState extends ConsumerState<IngredientForm> {
         'macros': '190 kcal | P: 7g | C: 32g | F: 3g',
       },
       {
-        'id': 101,
+        'id': 102,
         'name': 'Oats Premium',
         'amount': 50.0,
         'macros': '250 kcal | P: 10g | C: 30g | F: 5g',
@@ -130,118 +186,260 @@ class IngredientFormState extends ConsumerState<IngredientForm> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(AppLocalizations.of(context).logIngredient),
-        // backgroundColor: pcolor,
-        backgroundColor: appBarBackground,
-        foregroundColor: appBarForeground,
+        title: Text(i18n.logIngredient),
+        backgroundColor: theme.colorScheme.primary,
+        foregroundColor: theme.colorScheme.onPrimary,
       ),
-      body: Container(
-        margin: EdgeInsets.all(20),
-        child: Form(
-          key: _form,
-
-          child: Column(
-            children: [
-              // Input field to Search ingredient
-              TextFormField(
-                key: const Key('ingredient-text-search'),
-
-                decoration: InputDecoration(
-                  labelText: 'Search ingredient',
-                  suffixIcon: Icon(Icons.search_rounded),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TextFormField(
+                  key: const Key('ingredient-text-search'),
+                  controller: _ingredientController,
+                  decoration: InputDecoration(
+                    labelText: 'Search ingredient',
+                    prefixIcon: const Icon(Icons.search),
+                    suffixIcon: _ingredientController.text.isNotEmpty
+                        ? IconButton(
+                            onPressed: () {
+                              _ingredientController.clear();
+                              updateSearchQuery('');
+                              unSelectIngredient();
+                            },
+                            icon: const Icon(Icons.clear),
+                          )
+                        : null,
+                  ),
+                  onChanged: (value) {
+                    updateSearchQuery(value);
+                  },
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Please enter or select an ingredient';
+                    }
+                    return null;
+                  },
                 ),
-                onChanged: (value) => setState(() {
-                  _searchQuery = value;
-                }),
-              ),
-              SizedBox(height: 8),
-              // Weight
-              Row(
-                children: [
-                  Expanded(
-                    flex: 2,
-                    child: TextFormField(
-                      key: const Key('form-weight'),
-                      decoration: InputDecoration(
-                        // labelText: 'Weight',
-                        labelText:  i18n.weight,
-                        suffix: Text(staticUnitLabel),
-                        border: OutlineInputBorder(),
-                      ),
-                      onChanged: (value) {
-                        final amountVal = double.parse(value);
-                        if (amountVal != null) {
-                          _localMealItem['amount'] = amountVal;
-                        }
-                      },
-                    ),
-                  ),
-                  SizedBox(width: 10),
-                  Expanded(
-                    flex: 2,
-                    child: TextFormField(
-                      key: Key('date'),
-                      decoration: InputDecoration(
-                        // label: Text('Date'),
-                        label: Text(i18n.date),
-                        suffix: Icon(Icons.calendar_month),
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                  ),
-                  SizedBox(width: 10),
-
-                  Expanded(
-                    flex: 1,
-                    child: TextFormField(
-                      key: Key('time'),
-                      decoration: InputDecoration(
-                        // label: Text('Time'),
-                        label: Text(i18n.time),
-                        suffix: Icon(Icons.calendar_month),
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: 20),
-
-              
-              Text(
-                i18n.recentIngredients ,
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 10),
-
-              
-              filteredSuggestions.isEmpty
-                  ? Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 20),
-                      child: Text(i18n.noEntries) ,
-                    )
-                  : Expanded(
-                      child: ListView.builder(
-                        itemCount: filteredSuggestions.length,
-                        itemBuilder: (context, index) {
-                          final historicalItem = filteredSuggestions[index];
-                          return Card(
-                            child: ListTile(
-                              title: Text(historicalItem['name']),
-                              subtitle: Text(historicalItem['macros']),
-                              trailing: const Wrap(
-                                spacing: 12,
-                                children: [
-                                  Icon(Icons.info_outline),
-                                  Icon(Icons.copy),
-                                ],
-                              ),
-                            ),
-                          );
+                const SizedBox(height: 15),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      flex: 2,
+                      child: TextFormField(
+                        key: const Key('form-weight'),
+                        controller: _amountController,
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        decoration: InputDecoration(
+                          labelText: i18n.weight,
+                          suffixText: staticUnitLabel,
+                          border: const OutlineInputBorder(),
+                        ),
+                        onChanged: (value) {
+                          setState(() {
+                            final parsedVal = double.tryParse(value);
+                            if (parsedVal != null) {
+                              _localMealItem['amount'] = parsedVal;
+                            }
+                          });
+                        },
+                        validator: (value) {
+                          final text = value?.trim() ?? '';
+                          if (text.isEmpty) {
+                            return 'Enter value';
+                          }
+                          final parsed = double.tryParse(text);
+                          if (parsed == null) {
+                            return 'Enter valid number';
+                          }
+                          if (parsed < 1 || parsed > 1000) {
+                            return 'Value between 1 and 1000';
+                          }
+                          return null;
                         },
                       ),
                     ),
-            ],
+                    if (widget.withDate) ...[
+                      const SizedBox(width: 10),
+                      Expanded(
+                        flex: 2,
+                        child: TextFormField(
+                          key: const Key('field-date-fallback'),
+                          readOnly: true,
+                          controller: _dateController,
+                          decoration: InputDecoration(
+                            labelText: i18n.date,
+                            suffixIcon: const Icon(Icons.calendar_month),
+                            border: const OutlineInputBorder(),
+                          ),
+                          onTap: () async {
+                            final selectedDate = await showDatePicker(
+                              context: context,
+                              initialDate: _date,
+                              firstDate: DateTime(DateTime.now().year - 1),
+                              lastDate: DateTime.now(),
+                            );
+                            if (selectedDate != null) {
+                              setState(() {
+                                _date = selectedDate;
+                                _synchronizeDateDisplay();
+                              });
+                            }
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        flex: 1,
+                        child: TextFormField(
+                          key: const Key('field-time-fallback'),
+                          readOnly: true,
+                          controller: _timeController,
+                          decoration: InputDecoration(
+                            labelText: i18n.time,
+                            border: const OutlineInputBorder(),
+                          ),
+                          onTap: () async {
+                            final selectedTime = await showTimePicker(
+                              context: context,
+                              initialTime: _time,
+                            );
+                            if (selectedTime != null) {
+                              setState(() {
+                                _time = selectedTime;
+                                _synchronizeTimeDisplay();
+                              });
+                            }
+                          },
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+                if (_ingredientIdController.text.isNotEmpty &&
+                    _amountController.text.isNotEmpty)
+                  SizedBox(
+                    width: double.infinity,
+                    child: Card(
+                      color: Colors.blueGrey.shade50,
+                      margin: const EdgeInsets.symmetric(vertical: 15.0),
+                      child: Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text('Macros preview', style: titleMediumBoldTheme),
+                            const SizedBox(height: 6.0),
+                            Text(
+                              'Ingredient ID: ${_ingredientIdController.text}',
+                            ),
+                            Text(
+                              'Target Mass: ${_amountController.text} $staticUnitLabel',
+                            ),
+                            const Text('Ingredient Detail'),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                const SizedBox(height: 15),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    key: const Key('submit-ingredient-button'),
+                    onPressed: () {
+                      if (!_formKey.currentState!.validate()) {
+                        return;
+                      }
+                      _formKey.currentState!.save();
+
+                      final finalizedTimestamp = DateTime(
+                        _date.year,
+                        _date.month,
+                        _date.day,
+                        _time.hour,
+                        _time.minute,
+                      );
+
+                      widget.onSave(
+                        context,
+                        ref,
+                        _localMealItem,
+                        finalizedTimestamp,
+                      );
+                    },
+                    child: const Text('Save'),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  i18n.recentlyUsedIngredients,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 10),
+                Expanded(
+                  child: filteredSuggestions.isEmpty
+                      ? Center(child: Text(i18n.noEntries))
+                      : ListView.builder(
+                          itemCount: filteredSuggestions.length,
+                          itemBuilder: (context, index) {
+                            final historicalItem = filteredSuggestions[index];
+                            return Card(
+                              margin: const EdgeInsets.symmetric(vertical: 4.0),
+                              child: ListTile(
+                                title: Text(historicalItem['name'] ?? ''),
+                                subtitle: Text(historicalItem['macros'] ?? ''),
+                                trailing: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(Icons.info_outline),
+                                      onPressed: () {
+                                        showDialog(
+                                          context: context,
+                                          builder: (ctx) => AlertDialog(
+                                            title: Text(
+                                              historicalItem['name'].toString(),
+                                            ),
+                                            content: Text(
+                                              'Static historical data info block for ${historicalItem['name']}',
+                                            ),
+                                            actions: [
+                                              TextButton(
+                                                onPressed: () =>
+                                                    Navigator.pop(ctx),
+                                                child: const Text('Close'),
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                    const Icon(Icons.copy, color: Colors.grey),
+                                  ],
+                                ),
+                                onTap: () {
+                                  selectIngredient({
+                                    'id': historicalItem['id'],
+                                    'name': historicalItem['name'],
+                                  }, historicalItem['amount'] as num?);
+                                },
+                              ),
+                            );
+                          },
+                        ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

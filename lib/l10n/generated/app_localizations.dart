@@ -98,47 +98,107 @@ abstract class AppLocalizations {
     Locale('fr'),
   ];
 
-  /// no description (realflutter)
+  /// Title text for the ingredient logging application bar
   ///
   /// In en, this message translates to:
   /// **'Log ingredient to nutrition diary'**
   String get logIngredient;
 
-  /// No description provided for @ingredientLogged.
+  /// Toast or snackbar message confirming data persistence
   ///
   /// In en, this message translates to:
   /// **'Ingredient logged to diary'**
   String get ingredientLogged;
 
-  /// No description provided for @weight.
+  /// Label text inside the ingredient search field
+  ///
+  /// In en, this message translates to:
+  /// **'Search ingredient'**
+  String get searchIngredient;
+
+  /// Validation message fallback for ingredient selector fields
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter or select an ingredient'**
+  String get enterOrSelectIngredient;
+
+  /// Label for mass or weight input fields
   ///
   /// In en, this message translates to:
   /// **'Weight'**
   String get weight;
 
-  /// No description provided for @date.
+  /// The metric unit symbol for grams
+  ///
+  /// In en, this message translates to:
+  /// **'g'**
+  String get g;
+
+  /// Validation error text when a field is left empty
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a value'**
+  String get enterValue;
+
+  /// Validation error text when input is non-numeric
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a valid number'**
+  String get enterValidNumber;
+
+  /// Validation error text enforcing numeric boundaries
+  ///
+  /// In en, this message translates to:
+  /// **'Value must be between {min} and {max}'**
+  String formMinMaxValues(num min, num max);
+
+  /// Label for calendar selection inputs
   ///
   /// In en, this message translates to:
   /// **'Date'**
   String get date;
 
-  /// No description provided for @time.
+  /// Label for system clock selection inputs
   ///
   /// In en, this message translates to:
   /// **'Time'**
   String get time;
 
-  /// No description provided for @recentIngredients.
+  /// Header title text for the macronutrient summary breakdown block
   ///
   /// In en, this message translates to:
-  /// **'Recently Used ingredients'**
-  String get recentIngredients;
+  /// **'Macros preview'**
+  String get macrosPreview;
 
-  /// No description provided for @noEntries.
+  /// Generic description fallback key
+  ///
+  /// In en, this message translates to:
+  /// **'Description'**
+  String get description;
+
+  /// Text for form submission and persistence actions
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get save;
+
+  /// Section header displaying historical data lists
+  ///
+  /// In en, this message translates to:
+  /// **'Recently Used Ingredients'**
+  String get recentlyUsedIngredients;
+
+  /// Fallback string displayed when filter search returns zero records
   ///
   /// In en, this message translates to:
   /// **'No matching items found'**
   String get noEntries;
+
+  /// Label text on dialogue cancellation steps
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get close;
 }
 
 class _AppLocalizationsDelegate

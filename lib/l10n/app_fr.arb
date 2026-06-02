@@ -1,12 +1,19 @@
 {
-    "logIngredient" : "Logee ingredientee to nutrition diary",
-    "@logIngredient" : {
-        "description" : "noee descriptionee (realflutter)"
-    },
-    "ingredientLogged" : "Ingredientee loggedee to diary",
-    "weight": "Weight",
+    "logIngredient": "Enregistrer un ingrédient dans le journal",
+    "ingredientLogged": "Ingrédient enregistré dans le journal",
+    "searchIngredient": "Rechercher un ingrédient",
+    "enterOrSelectIngredient": "Veuillez saisir ou sélectionner un ingrédient",
+    "weight": "Poids",
+    "g": "g",
+    "enterValue": "Veuillez saisir une valeur",
+    "enterValidNumber": "Veuillez saisir un nombre valide",
+    "formMinMaxValues": "La valeur doit être comprise entre {min} et {max}",
     "date": "Date",
-    "time": "Time",
-    "recentIngredients": "Recently Used ingredients - french lang (app_fr.arb)",
-    "noEntries": "No matching items foundeee (fr)"
+    "time": "Heure",
+    "macrosPreview": "Aperçu des macros",
+    "description": "Description",
+    "save": "Enregistrer",
+    "recentlyUsedIngredients": "Ingrédients récemment utilisés",
+    "noEntries": "Aucun élément correspondant trouvé",
+    "close": "Fermer"
 }
