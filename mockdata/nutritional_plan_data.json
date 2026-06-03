@@ -73,5 +73,33 @@
       ]
     }
   ],
-  "diaryEntries": []
+  "diaryEntries": [
+    {
+      "planId": "plan-uuid-001",
+      "mealId": "meal-uuid-001",
+      "datetime": "2026-06-03T08:00:00Z",
+      "mealItem": {
+        "id": "item-uuid-001",
+        "mealId": "meal-uuid-001",
+        "ingredientId": 101,
+        "amount": 100,
+        "ingredient": {
+          "id": 101,
+          "remote_id": "remote-oatmeal-001",
+          "source_name": "wger Database",
+          "source_url": "https://wger.de",
+          "license_object_url": "https://wger.de",
+          "code": "OAT-101",
+          "name": "Oatmeal (History Mock)",
+          "created": "2026-06-03T12:00:00Z",
+          "energy": 389,
+          "carbohydrates": "66.0",
+          "carbohydrates_sugar": "1.0",
+          "protein": "13.0",
+          "fat": "7.0",
+          "weight_units": []
+        }
+      }
+    }
+  ]
 }
