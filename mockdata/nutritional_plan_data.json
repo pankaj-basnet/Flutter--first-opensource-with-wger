@@ -1,46 +1,47 @@
 {
-  "id": 1,
-  "name": "Mass Gain Phase 1",
-  "description": "High protein meal layout designed around wger ingredients specification.",
-  "creation_date": "2026-05-29",
+  "id": "plan-uuid-001",
+  "name": "Lean Bulk Plan",
   "meals": [
     {
-      "id": 101,
-      "name": "Post-Workout Shake",
-      "time": "08:30:00",
-      "items": [
+      "id": "meal-uuid-001",
+      "name": "Breakfast",
+      "time": "08:00",
+      "mealItems": [
         {
-          "ingredient_id": 412,
-          "name": "Whey Protein Isolate",
-          "amount": 40.0,
-          "unit": "g"
-        },
-        {
-          "ingredient_id": 718,
-          "name": "Oat Milk",
-          "amount": 300.0,
-          "unit": "ml"
+          "id": "item-uuid-001",
+          "ingredientId": 101,
+          "amount": 100,
+          "ingredient": {
+            "id": 101,
+            "name": "Oatmeal",
+            "energy": 389,
+            "protein": 13,
+            "carbohydrates": 66,
+            "fat": 7
+          }
         }
       ]
     },
     {
-      "id": 102,
-      "name": "Lunch - High Carb Lean",
-      "time": "13:00:00",
-      "items": [
+      "id": "meal-uuid-002",
+      "name": "Breakfast",
+      "time": "08:00",
+      "mealItems": [
         {
-          "ingredient_id": 105,
-          "name": "Chicken Breast (Grilled)",
-          "amount": 200.0,
-          "unit": "g"
-        },
-        {
-          "ingredient_id": 204,
-          "name": "Basmati Rice (Cooked)",
-          "amount": 150.0,
-          "unit": "g"
+          "id": "item-uuid-002",
+          "ingredientId": 102,
+          "amount": 100,
+          "ingredient": {
+            "id": 102,
+            "name": "Oatmeal",
+            "energy": 389,
+            "protein": 13,
+            "carbohydrates": 66,
+            "fat": 7
+          }
         }
       ]
     }
-  ]
+  ],
+  "diaryEntries": []
 }
