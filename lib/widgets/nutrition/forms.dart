@@ -232,9 +232,11 @@ class _IngredientFormState extends State<IngredientForm> {
                         onChanged: (value) {
                           final parsedVal = numberFormat.tryParse(value);
                           if (parsedVal != null) {
-                            _localMealItem = _localMealItem.copyWith(
-                              amount: parsedVal.toDouble(),
-                            );
+                            setState(() {
+                              _localMealItem = _localMealItem.copyWith(
+                                amount: parsedVal.toDouble(),
+                              );
+                            });
                           }
                         },
                         validator: (value) {
@@ -252,8 +254,8 @@ class _IngredientFormState extends State<IngredientForm> {
                               FormValidationBounds.minWeight,
                               FormValidationBounds.maxWeight,
                             );
-                            return null;
                           }
+                          return null;
                         },
                       ),
                     ),
@@ -362,6 +364,15 @@ class _IngredientFormState extends State<IngredientForm> {
                       foregroundColor: theme.colorScheme.onPrimary,
                     ),
                     onPressed: () async {
+                      if (widget.plan.id == null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Plan has not been saved yet.'),
+                          ),
+                        );
+                        return;
+                      }
+                      
                       if (!_formKey.currentState!.validate()) return;
 
                       _formKey.currentState!.save();
