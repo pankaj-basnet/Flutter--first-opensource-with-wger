@@ -97,6 +97,12 @@
           "carbohydrates_sugar": "1.0",
           "protein": "13.0",
           "fat": "7.0",
+          "fat_saturated": "1.2",
+          "fiber": "10.0",
+          "sodium": "0.002",
+          "is_vegan": true,
+          "is_vegetarian": true,
+          "nutriscore": "a",
           "weight_units": []
         }
       }
