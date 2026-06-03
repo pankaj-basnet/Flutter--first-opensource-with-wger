@@ -13,19 +13,34 @@
           "amount": 100,
           "ingredient": {
             "id": 101,
+            "remote_id": "remote-oatmeal-001",
+            "languageId": 1,
+            "source_name": "wger Nutrition Database",
+            "source_url": "https://wger.de",
+            "license_object_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+            "code": "OAT-101",
             "name": "Oatmeal",
+            "created": "2026-06-03T12:00:00Z",
             "energy": 389,
-            "protein": 13,
-            "carbohydrates": 66,
-            "fat": 7
+            "carbohydrates": "66.0",
+            "carbohydrates_sugar": "1.0",
+            "protein": "13.0",
+            "fat": "7.0",
+            "fat_saturated": "1.2",
+            "fiber": "10.0",
+            "sodium": "0.002",
+            "is_vegan": true,
+            "is_vegetarian": true,
+            "nutriscore": "a",
+            "weight_units": []
           }
         }
       ]
     },
     {
       "id": "meal-uuid-002",
-      "name": "Breakfast",
-      "time": "08:00",
+      "name": "Post-Workout Snack",
+      "time": "11:30",
       "mealItems": [
         {
           "id": "item-uuid-002",
@@ -33,11 +48,26 @@
           "amount": 100,
           "ingredient": {
             "id": 102,
-            "name": "Oatmeal",
-            "energy": 389,
-            "protein": 13,
-            "carbohydrates": 66,
-            "fat": 7
+            "remote_id": "remote-banana-002",
+            "languageId": 1,
+            "source_name": "wger Nutrition Database",
+            "source_url": "https://wger.de",
+            "license_object_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+            "code": "BAN-102",
+            "name": "Banana",
+            "created": "2026-06-03T12:00:00Z",
+            "energy": 89,
+            "carbohydrates": "23.0",
+            "carbohydrates_sugar": "12.0",
+            "protein": "1.1",
+            "fat": "0.3",
+            "fat_saturated": "0.1",
+            "fiber": "2.6",
+            "sodium": "0.001",
+            "is_vegan": true,
+            "is_vegetarian": true,
+            "nutriscore": "a",
+            "weight_units": []
           }
         }
       ]

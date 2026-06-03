@@ -30,7 +30,9 @@ class MyApp extends StatelessWidget {
           'Failed to load nutritional plan. Status: ${response.statusCode}',
         );
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      debugPrint('Parsing error: $e');
+      debugPrint('Stack trace: $stackTrace');
       throw Exception('Network or parsing error: $e');
     }
   }
