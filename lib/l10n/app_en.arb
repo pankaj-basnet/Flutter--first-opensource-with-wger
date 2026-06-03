@@ -1,12 +1,80 @@
 {
-    "logIngredient" : "Log ingredient to nutrition diary",
-    "@logIngredient" : {
-        "description" : "no description (realflutter)"
+    "logIngredient": "Log ingredient to nutrition diary",
+    "@logIngredient": {
+        "description": "Title text for the ingredient logging application bar"
     },
-    "ingredientLogged" : "Ingredient logged to diary",
+    "ingredientLogged": "Ingredient logged to diary",
+    "@ingredientLogged": {
+        "description": "Toast or snackbar message confirming data persistence"
+    },
+    "searchIngredient": "Search ingredient",
+    "@searchIngredient": {
+        "description": "Label text inside the ingredient search field"
+    },
+    "enterOrSelectIngredient": "Please enter or select an ingredient",
+    "@enterOrSelectIngredient": {
+        "description": "Validation message fallback for ingredient selector fields"
+    },
     "weight": "Weight",
+    "@weight": {
+        "description": "Label for mass or weight input fields"
+    },
+    "g": "g",
+    "@g": {
+        "description": "The metric unit symbol for grams"
+    },
+    "enterValue": "Please enter a value",
+    "@enterValue": {
+        "description": "Validation error text when a field is left empty"
+    },
+    "enterValidNumber": "Please enter a valid number",
+    "@enterValidNumber": {
+        "description": "Validation error text when input is non-numeric"
+    },
+    "formMinMaxValues": "Value must be between {min} and {max}",
+    "@formMinMaxValues": {
+        "description": "Validation error text enforcing numeric boundaries",
+        "placeholders": {
+            "min": {
+                "type": "num",
+                "example": "1"
+            },
+            "max": {
+                "type": "num",
+                "example": "1000"
+            }
+        }
+    },
     "date": "Date",
+    "@date": {
+        "description": "Label for calendar selection inputs"
+    },
     "time": "Time",
-    "recentIngredients": "Recently Used ingredients",
-    "noEntries": "No matching items found"
+    "@time": {
+        "description": "Label for system clock selection inputs"
+    },
+    "macrosPreview": "Macros preview",
+    "@macrosPreview": {
+        "description": "Header title text for the macronutrient summary breakdown block"
+    },
+    "description": "Description",
+    "@description": {
+        "description": "Generic description fallback key"
+    },
+    "save": "Save",
+    "@save": {
+        "description": "Text for form submission and persistence actions"
+    },
+    "recentlyUsedIngredients": "Recently Used Ingredients",
+    "@recentlyUsedIngredients": {
+        "description": "Section header displaying historical data lists"
+    },
+    "noEntries": "No matching items found",
+    "@noEntries": {
+        "description": "Fallback string displayed when filter search returns zero records"
+    },
+    "close": "Close",
+    "@close": {
+        "description": "Label text on dialogue cancellation steps"
+    }
 }

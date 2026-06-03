@@ -37,7 +37,6 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'RealFlutter',
       theme: rfLightTheme,
-      // fontFamily: 'GoogleSans',
       home: FutureBuilder<NutritionalPlan>(
         future: getDataFromGithub(),
         builder: (context, snapshot) {
