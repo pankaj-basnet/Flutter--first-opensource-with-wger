@@ -1,0 +1,165 @@
+// ignore_for_file: constant_identifier_names
+
+import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+
+/// Minimum server version required by this version of the app.
+///
+/// Bump this value whenever you depend on API changes that are only available
+/// in a newer server release. The check is performed during login and
+/// auto-login and mirrors what the server does with MIN_APP_VERSION.
+const MIN_SERVER_VERSION = '2.5';
+
+/// Size for the "smaller" icons, e.g. when they belong to less important items
+/// and we don't want to fill the whole screen
+const double ICON_SIZE_SMALL = 20;
+
+/// Default wger server during login
+const DEFAULT_SERVER_PROD = 'https://wger.de';
+
+// Default wger test server during development
+const DEFAULT_SERVER_TEST = 'https://dev.wger.de';
+const TESTSERVER_USER_NAME = 'user';
+const TESTSERVER_PASSWORD = 'flutteruser';
+
+// Weight and repetition units for the workout logs
+const REP_UNIT_REPETITIONS_ID = 1;
+const REP_UNIT_TILL_FAILURE_ID = 2;
+
+const WEIGHT_UNIT_KG = 1;
+const WEIGHT_UNIT_LB = 2;
+
+/// Time to locally cache values such as ingredients, etc
+const DAYS_TO_CACHE = 20;
+
+/// Name of the submit button in forms
+const SUBMIT_BUTTON_KEY_NAME = 'submit-button';
+
+/// Local Preferences keys
+const PREFS_INGREDIENTS = 'ingredientData';
+const PREFS_WORKOUT_UNITS = 'workoutUnits';
+const PREFS_USER = 'userData';
+const PREFS_USER_DARK_THEME = 'userDarkMode';
+const PREFS_USER_LOCALE = 'userLocale';
+const PREFS_LAST_SERVER = 'lastServer';
+
+/// Headless JWT auth: SharedPreferences keys.
+///
+/// Read in parallel with the legacy `PREFS_USER` blob during the migration
+/// window; once a user logs in via the headless flow these supersede it.
+/// The refresh token is **not** stored here, it lives in secure storage
+/// (`SECURE_STORAGE_REFRESH_TOKEN`).
+const PREFS_ACCESS_TOKEN = 'accessToken';
+const PREFS_ACCESS_EXPIRES_AT = 'accessExpiresAt';
+const PREFS_TOKEN_TYPE = 'tokenType';
+const PREFS_SERVER_URL = 'serverUrl';
+
+/// Secure-storage key for the headless refresh token.
+const SECURE_STORAGE_REFRESH_TOKEN = 'wger_refresh_token';
+
+/// Login-CSRF defence for the web-handoff flow. Stored in SharedPreferences
+/// (not a secret, just a one-shot nonce echoed back by the server).
+const PREFS_APP_AUTH_STATE = 'appAuthState';
+const PREFS_APP_AUTH_STATE_AT = 'appAuthStateAt';
+
+/// True once PowerSync has been reachable for this user at least once
+/// (i.e. its liveness probe returned 200).
+const PREFS_HAS_EVER_SYNCED = 'hasEverSynced';
+
+/// Absolute URL prefix for server-side media files
+const PREFS_MEDIA_URL_PREFIX = 'mediaUrlPrefix';
+
+const DEFAULT_ANIMATION_DURATION = Duration(milliseconds: 200);
+const DEFAULT_ANIMATION_CURVE = Curves.bounceIn;
+
+/// Dateformat used when using a date as a key in a dictionary. Using either the
+/// regular date object or date.toLocal() can cause problems, depending on the
+/// system's settings. Using a string is safer.
+//ignore: non_constant_identifier_names
+final DateFormatLists = DateFormat('yyyy-MM-dd');
+
+/// Available plate weights, used for the plate calculator
+const AVAILABLE_PLATES = [1.25, 2.5, 5, 10, 15];
+
+/// Weight of the bar, used in the plate calculator
+const BAR_WEIGHT = 20;
+
+/// ID of the equipment entry for barbell
+const ID_EQUIPMENT_BARBELL = 1;
+
+/// kcal per gram of protein (approx)
+const ENERGY_PROTEIN = 4;
+
+/// kcal per gram of carbohydrates (approx)
+const ENERGY_CARBOHYDRATES = 4;
+
+/// kcal per gram of fat (approx)
+const ENERGY_FAT = 9;
+
+/// Language ID for English (fallback)
+const LANGUAGE_SHORT_ENGLISH = 'en';
+
+/// IDs of the different image art styles
+///
+/// Values taken from exercises/models/image.py
+enum EXERCISE_IMAGE_ART_STYLE {
+  // ignore: unused_field
+  _, // 0 is not used
+  LINE_ART,
+  THREE_D,
+  LOW_POLY,
+  PHOTO,
+  OTHER,
+}
+
+/// Sentinel UUID for the synthetic "loose log entries" pseudo-meal.
+///
+/// All-zero UUID is reserved by RFC 4122 (the "nil UUID") and won't collide
+/// with any client-generated UUID v4.
+const PSEUDO_MEAL_ID = '00000000-0000-0000-0000-000000000000';
+
+/// Colors used for muscles
+const COLOR_MAIN_MUSCLES = Colors.red;
+const COLOR_SECONDARY_MUSCLES = Colors.orange;
+
+// Min account age to contribute exercises. Needs to be kept in sync with
+// the value on the backend
+const MIN_ACCOUNT_AGE = 14;
+
+/// Different project URLs
+const GITHUB_PROJECT_URL = 'https://github.com/wger-project';
+const GITHUB_REPO_URL = '$GITHUB_PROJECT_URL/flutter';
+const GITHUB_ISSUES_URL = '$GITHUB_REPO_URL/issues/new/choose';
+const GITHUB_ISSUES_BUG_URL = '$GITHUB_REPO_URL/issues/new?template=1_bug.yml';
+const GITHUB_SPONSORS_URL = 'https://github.com/sponsors/wger-project';
+
+/// Maximum length for a pre-filled GitHub issue URL
+const GITHUB_ISSUES_MAX_URL_LENGTH = 8000;
+const DISCORD_URL = 'https://discord.gg/rPWFv6W';
+const MASTODON_URL = 'https://fosstodon.org/@wger';
+const READTHEDOCS_URL = 'https://wger.readthedocs.io';
+const WEBLATE_URL = 'https://hosted.weblate.org/engage/wger';
+const BUY_ME_A_COFFEE_URL = 'https://buymeacoffee.com/wger';
+const LIBERAPAY_URL = 'https://liberapay.com/wger';
+
+/// Factor to multiply / divide in the charts when converting dates to milliseconds
+/// from epoch since fl_charts does not support real time series charts and using
+/// the milliseconds themselves can cause the application to crash since it runs
+/// out of memory...
+const double CHART_MILLISECOND_FACTOR = 100000.0;
+
+enum WeightUnitEnum { kg, lb }
+
+/// TextInputType for decimal numbers
+const textInputTypeDecimal = TextInputType.numberWithOptions(decimal: true);
+
+const String API_MAX_PAGE_SIZE = '999';
+
+const String API_RESULTS_PAGE_SIZE = '100';
+
+/// Marker used for identifying interpolated values in a list, e.g. for measurements
+/// the milliseconds in the entry date are set to this value
+const INTERPOLATION_MARKER = 123;
+
+/// Creative Commons license IDs
+const CC_BY_SA_4_ID = 2;

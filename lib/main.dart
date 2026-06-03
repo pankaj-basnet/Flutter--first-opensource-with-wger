@@ -1,12 +1,15 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
+import 'package:realflutter/database/powersync/database.dart';
 import 'package:realflutter/l10n/generated/app_localizations.dart';
+import 'package:realflutter/models/nutrition/nutritional_plan.dart';
 import 'package:realflutter/theme/theme.dart';
 import 'package:realflutter/widgets/nutrition/forms.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(const ProviderScope(child: MyApp()));
 }
 
 class MyApp extends StatelessWidget {
@@ -21,7 +24,7 @@ class MyApp extends StatelessWidget {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        return data as NutritionalPlan;
+        return NutritionalPlan.fromJson(data);
       } else {
         throw Exception(
           'Failed to load nutritional plan. Status: ${response.statusCode}',
@@ -49,7 +52,13 @@ class MyApp extends StatelessWidget {
               body: Center(child: Text('Error: ${snapshot.error}')),
             );
           } else if (snapshot.hasData) {
-            return getIngredientLogForm(snapshot.data!);
+            // Use a Consumer to read the database provider
+            return Consumer(
+              builder: (context, ref, child) {
+                final db = ref.read(driftPowerSyncDatabase);
+                return getIngredientLogForm(snapshot.data!, db); // Pass db here
+              },
+            );
           } else {
             return const Scaffold(body: Center(child: Text('No data found.')));
           }

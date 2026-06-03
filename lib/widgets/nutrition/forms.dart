@@ -1,141 +1,156 @@
+import 'package:drift/drift.dart' as drift;
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
+
+// Import domain models
 import 'package:realflutter/l10n/generated/app_localizations.dart';
+import 'package:realflutter/models/nutrition/ingredient.dart';
+import 'package:realflutter/models/nutrition/log.dart';
+import 'package:realflutter/models/nutrition/meal_item.dart';
+import 'package:realflutter/models/nutrition/nutritional_plan.dart';
 
-typedef NutritionalPlan = Map<String, dynamic>;
-typedef MealItem = Map<String, dynamic>;
-typedef LogItem = Map<String, dynamic>;
+// Assuming an exported AppDatabase instance for Drift/PowerSync
+import 'package:realflutter/database/powersync/database.dart';
 
-Widget getIngredientLogForm(NutritionalPlan plan) {
+/// Centralized bounds for form validation
+class FormValidationBounds {
+  static const double minWeight = 1.0;
+  static const double maxWeight = 10000.0;
+}
+
+/// Factory function to return the configured Ingredient Form.
+/// Removed Riverpod; now relies on direct AppDatabase injection/usage for offline persistence.
+Widget getIngredientLogForm(NutritionalPlan plan, DriftPowersyncDatabase db) {
   return IngredientForm(
     plan: plan,
-    recent: const [],
-    onSave:
-        (
-          BuildContext context,
-          WidgetRef ref,
-          Map<String, dynamic> meal,
-          DateTime? dt,
-        ) {
-          final i18n = AppLocalizations.of(context);
+    recentLogs: plan.dedupDiaryEntries,
+    onSave: (BuildContext context, MealItem mealItem, DateTime dt) async {
+      // Create the offline-first domain model
+      final logItem = LogItem.fromMealItem(mealItem, plan.id ?? '', null, dt);
 
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(i18n.ingredientLogged, textAlign: TextAlign.center),
-            ),
-          );
-        },
+      // Persist to local SQLite via Drift Companion.
+      // PowerSync will handle the upstream sync to Django automatically.
+      await db.into(db.logItemTable).insert(logItem.toCompanion());
+
+      // Provide user feedback
+      if (context.mounted) {
+        final i18n = AppLocalizations.of(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(i18n.ingredientLogged, textAlign: TextAlign.center),
+          ),
+        );
+      }
+    },
     withDate: true,
   );
 }
 
-/// Form to pick an ingredient (and amount) to log to a diary
-class IngredientForm extends ConsumerStatefulWidget {
+class IngredientForm extends StatefulWidget {
   final NutritionalPlan plan;
-  final Function(
-    BuildContext context,
-    WidgetRef ref,
-    MealItem meal,
-    DateTime? dt,
-  )
-  onSave;
-  final List<LogItem> recent;
+  final List<LogItem> recentLogs;
   final bool withDate;
-  final String barcode;
-  final bool test;
+  final Future<void> Function(BuildContext context, MealItem meal, DateTime dt)
+  onSave;
 
   const IngredientForm({
     super.key,
     required this.plan,
-    required this.recent,
+    required this.recentLogs,
     required this.onSave,
     required this.withDate,
-    this.barcode = '',
-    this.test = false,
   });
 
   @override
-  ConsumerState<ConsumerStatefulWidget> createState() => IngredientFormState();
+  State<IngredientForm> createState() => _IngredientFormState();
 }
 
-class IngredientFormState extends ConsumerState<IngredientForm> {
+class _IngredientFormState extends State<IngredientForm> {
   final _formKey = GlobalKey<FormState>();
 
+  // Explicitly instantiating controllers strictly inside the State lifecycle
   final _ingredientController = TextEditingController();
-  final _ingredientIdController = TextEditingController();
   final _amountController = TextEditingController();
   final _dateController = TextEditingController();
   final _timeController = TextEditingController();
 
-  DateTime _date = DateTime.now();
-  TimeOfDay _time = TimeOfDay.now();
+  DateTime _selectedDate = DateTime.now();
+  TimeOfDay _selectedTime = TimeOfDay.now();
 
-  MealItem get mealItem => _localMealItem;
-  String _searchQuery = '';
-
-  TextEditingController get ingredientIdController => _ingredientIdController;
   late MealItem _localMealItem;
+  String _searchQuery = '';
 
   @override
   void initState() {
     super.initState();
+    // Initialize the domain model explicitly using the factory
+    _localMealItem = MealItem.empty();
 
-    _localMealItem = {
-      'id': null,
-      'ingredient_id': 0,
-      'amount': 0.0,
-      'weight_unit_id': null,
-      'ingredient_name': '',
-    };
-
-    _synchronizeDateDisplay();
-    _synchronizeTimeDisplay();
+    // Post-frame callback ensures context is available for localized date/time fetching
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _synchronizeLocalizedDateDisplay();
+        _synchronizeLocalizedTimeDisplay();
+      }
+    });
   }
 
   @override
   void dispose() {
+    // Critical: Prevent memory leaks by disposing native resources
     _ingredientController.dispose();
-    _ingredientIdController.dispose();
     _amountController.dispose();
     _dateController.dispose();
     _timeController.dispose();
     super.dispose();
   }
 
-  void _synchronizeDateDisplay() {
-    _dateController.text =
-        '${_date.year}-${_date.month.toString().padLeft(2, '0')}-${_date.day.toString().padLeft(2, '0')}';
+  void _synchronizeLocalizedDateDisplay() {
+    final localeStr = Localizations.localeOf(context).toString();
+    _dateController.text = DateFormat.yMd(localeStr).format(_selectedDate);
   }
 
-  void _synchronizeTimeDisplay() {
-    _timeController.text =
-        '${_time.hour.toString().padLeft(2, '0')}:${_time.minute.toString().padLeft(2, '0')}';
+  void _synchronizeLocalizedTimeDisplay() {
+    final materializedLocalizations = MaterialLocalizations.of(context);
+    _timeController.text = materializedLocalizations.formatTimeOfDay(
+      _selectedTime,
+      alwaysUse24HourFormat: false,
+    );
   }
 
-  void updateSearchQuery(String query) {
+  void _updateSearchQuery(String query) {
     setState(() {
       _searchQuery = query;
     });
   }
 
-  void selectIngredient(Map<String, dynamic> ingredient, num? amount) {
+  void _selectIngredient(Ingredient ingredient, double? amount) {
     setState(() {
-      _localMealItem['ingredient_id'] = ingredient['id'];
-      _localMealItem['ingredient_name'] = ingredient['name'];
-      _ingredientController.text = ingredient['name'] ?? '';
-      _ingredientIdController.text = (ingredient['id'] ?? '').toString();
+      // Use the proper model's copyWith method to maintain immutability principles
+      _localMealItem = _localMealItem.copyWith(
+        ingredientId: ingredient.id,
+        ingredient: ingredient, // Attach the full object for macro calculations
+        amount: amount ?? _localMealItem.amount,
+      );
+
+      _ingredientController.text = ingredient.name;
 
       if (amount != null) {
-        _amountController.text = amount.toStringAsFixed(0);
-        _localMealItem['amount'] = amount.toDouble();
+        final numberFormat = NumberFormat.decimalPattern(
+          Localizations.localeOf(context).toString(),
+        );
+        _amountController.text = numberFormat.format(amount);
       }
     });
   }
 
-  void unSelectIngredient() {
+  void _unselectIngredient() {
     setState(() {
-      _localMealItem['ingredient_id'] = 0;
-      _ingredientIdController.text = '';
+      _localMealItem = _localMealItem.copyWith(
+        ingredientId: 0,
+        ingredient: null,
+      );
+      _ingredientController.clear();
     });
   }
 
@@ -143,50 +158,19 @@ class IngredientFormState extends ConsumerState<IngredientForm> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final i18n = AppLocalizations.of(context);
-
-    final themeText = Theme.of(context).textTheme;
-    final titleMediumBoldTheme = themeText.titleMedium?.copyWith(
-      fontWeight: FontWeight.bold,
+    final numberFormat = NumberFormat.decimalPattern(
+      Localizations.localeOf(context).toString(),
     );
 
-    // Hardcoded layout properties for testing component behavior
-    const String staticUnitLabel = 'g';
-    final List<Map<String, dynamic>> mockSuggestions = [
-      {
-        'id': 101,
-        'name': 'Oats',
-        'amount': 50.0,
-        'macros': '190 kcal | P: 7g | C: 32g | F: 3g',
-      },
-      {
-        'id': 102,
-        'name': 'Oats Premium',
-        'amount': 50.0,
-        'macros': '250 kcal | P: 10g | C: 30g | F: 5g',
-      },
-      {
-        'id': 202,
-        'name': 'Whey Protein',
-        'amount': 30.0,
-        'macros': '120 kcal | P: 25g | C: 2g | F: 1.5g',
-      },
-      {
-        'id': 303,
-        'name': 'Peanut Butter',
-        'amount': 15.0,
-        'macros': '90 kcal | P: 4g | C: 3g | F: 8g',
-      },
-    ];
-
-    // Filter local suggestions based on user search inputs
-    final filteredSuggestions = mockSuggestions.where((element) {
-      final name = element['name'].toString().toLowerCase();
+    // Filter against the recent logs provided by the NutritionalPlan domain object
+    final filteredLogs = widget.recentLogs.where((log) {
+      final name = log.ingredient?.name.toLowerCase() ?? '';
       return name.contains(_searchQuery.toLowerCase());
     }).toList();
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(i18n.logIngredient),
+        title: Text(i18n.logIngredient ?? 'Log Ingredient'),
         backgroundColor: theme.colorScheme.primary,
         foregroundColor: theme.colorScheme.onPrimary,
       ),
@@ -198,34 +182,37 @@ class IngredientFormState extends ConsumerState<IngredientForm> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // --- Search Input ---
                 TextFormField(
                   key: const Key('ingredient-text-search'),
                   controller: _ingredientController,
                   decoration: InputDecoration(
-                    labelText: 'Search ingredient',
+                    labelText: i18n.searchIngredient ?? 'Search ingredient',
                     prefixIcon: const Icon(Icons.search),
                     suffixIcon: _ingredientController.text.isNotEmpty
                         ? IconButton(
                             onPressed: () {
-                              _ingredientController.clear();
-                              updateSearchQuery('');
-                              unSelectIngredient();
+                              _updateSearchQuery('');
+                              _unselectIngredient();
                             },
                             icon: const Icon(Icons.clear),
                           )
                         : null,
                   ),
-                  onChanged: (value) {
-                    updateSearchQuery(value);
-                  },
+                  onChanged: _updateSearchQuery,
                   validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Please enter or select an ingredient';
+                    if (value == null ||
+                        value.trim().isEmpty ||
+                        _localMealItem.ingredientId == 0) {
+                      return i18n.enterOrSelectIngredient ??
+                          'Please select an ingredient';
                     }
                     return null;
                   },
                 ),
                 const SizedBox(height: 15),
+
+                // --- Amounts and Dates Row ---
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -238,29 +225,35 @@ class IngredientFormState extends ConsumerState<IngredientForm> {
                           decimal: true,
                         ),
                         decoration: InputDecoration(
-                          labelText: i18n.weight,
-                          suffixText: staticUnitLabel,
+                          labelText: i18n.weight ?? 'Weight',
+                          suffixText: i18n.g ?? 'g',
                           border: const OutlineInputBorder(),
                         ),
                         onChanged: (value) {
-                          setState(() {
-                            final parsedVal = double.tryParse(value);
-                            if (parsedVal != null) {
-                              _localMealItem['amount'] = parsedVal;
-                            }
-                          });
+                          final parsedVal = numberFormat.tryParse(value);
+                          if (parsedVal != null) {
+                            setState(() {
+                              _localMealItem = _localMealItem.copyWith(
+                                amount: parsedVal.toDouble(),
+                              );
+                            });
+                          }
                         },
                         validator: (value) {
                           final text = value?.trim() ?? '';
-                          if (text.isEmpty) {
-                            return 'Enter value';
-                          }
-                          final parsed = double.tryParse(text);
-                          if (parsed == null) {
-                            return 'Enter valid number';
-                          }
-                          if (parsed < 1 || parsed > 1000) {
-                            return 'Value between 1 and 1000';
+                          if (text.isEmpty)
+                            return i18n.enterValue ?? 'Enter value';
+
+                          final parsed = numberFormat.tryParse(text);
+                          if (parsed == null)
+                            return i18n.enterValidNumber ?? 'Invalid number';
+
+                          if (parsed < FormValidationBounds.minWeight ||
+                              parsed > FormValidationBounds.maxWeight) {
+                            return i18n.formMinMaxValues(
+                              FormValidationBounds.minWeight,
+                              FormValidationBounds.maxWeight,
+                            );
                           }
                           return null;
                         },
@@ -275,21 +268,22 @@ class IngredientFormState extends ConsumerState<IngredientForm> {
                           readOnly: true,
                           controller: _dateController,
                           decoration: InputDecoration(
-                            labelText: i18n.date,
+                            labelText: i18n.date ?? 'Date',
                             suffixIcon: const Icon(Icons.calendar_month),
                             border: const OutlineInputBorder(),
                           ),
                           onTap: () async {
-                            final selectedDate = await showDatePicker(
+                            final now = DateTime.now();
+                            final pickedDate = await showDatePicker(
                               context: context,
-                              initialDate: _date,
-                              firstDate: DateTime(DateTime.now().year - 1),
-                              lastDate: DateTime.now(),
+                              initialDate: _selectedDate,
+                              firstDate: DateTime(now.year - 5),
+                              lastDate: now,
                             );
-                            if (selectedDate != null) {
+                            if (pickedDate != null) {
                               setState(() {
-                                _date = selectedDate;
-                                _synchronizeDateDisplay();
+                                _selectedDate = pickedDate;
+                                _synchronizeLocalizedDateDisplay();
                               });
                             }
                           },
@@ -303,18 +297,18 @@ class IngredientFormState extends ConsumerState<IngredientForm> {
                           readOnly: true,
                           controller: _timeController,
                           decoration: InputDecoration(
-                            labelText: i18n.time,
+                            labelText: i18n.time ?? 'Time',
                             border: const OutlineInputBorder(),
                           ),
                           onTap: () async {
-                            final selectedTime = await showTimePicker(
+                            final pickedTime = await showTimePicker(
                               context: context,
-                              initialTime: _time,
+                              initialTime: _selectedTime,
                             );
-                            if (selectedTime != null) {
+                            if (pickedTime != null) {
                               setState(() {
-                                _time = selectedTime;
-                                _synchronizeTimeDisplay();
+                                _selectedTime = pickedTime;
+                                _synchronizeLocalizedTimeDisplay();
                               });
                             }
                           },
@@ -323,116 +317,144 @@ class IngredientFormState extends ConsumerState<IngredientForm> {
                     ],
                   ],
                 ),
-                if (_ingredientIdController.text.isNotEmpty &&
+
+                // --- Live Macro Calculations ---
+                if (_localMealItem.ingredient != null &&
                     _amountController.text.isNotEmpty)
-                  SizedBox(
-                    width: double.infinity,
-                    child: Card(
-                      color: Colors.blueGrey.shade50,
-                      margin: const EdgeInsets.symmetric(vertical: 15.0),
-                      child: Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text('Macros preview', style: titleMediumBoldTheme),
-                            const SizedBox(height: 6.0),
-                            Text(
-                              'Ingredient ID: ${_ingredientIdController.text}',
+                  Card(
+                    color: theme.colorScheme.surfaceContainerHighest
+                        .withOpacity(0.4),
+                    margin: const EdgeInsets.symmetric(vertical: 15.0),
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            i18n.macrosPreview ?? 'Macros preview',
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
                             ),
-                            Text(
-                              'Target Mass: ${_amountController.text} $staticUnitLabel',
-                            ),
-                            const Text('Ingredient Detail'),
-                          ],
-                        ),
+                          ),
+                          const SizedBox(height: 6.0),
+                          Text(
+                            '${i18n.description ?? 'Item'}: ${_localMealItem.ingredient!.name}',
+                          ),
+                          // Delegating the math to the NutritionalValues domain class!
+                          Text(
+                            'Calculated Calories: ${_localMealItem.nutritionalValues.energy.toStringAsFixed(1)} kcal',
+                          ),
+                          Text(
+                            'Calculated Protein: ${_localMealItem.nutritionalValues.protein.toStringAsFixed(1)} g',
+                          ),
+                        ],
                       ),
                     ),
                   ),
+
                 const SizedBox(height: 15),
+
+                // --- Submission ---
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
                     key: const Key('submit-ingredient-button'),
-                    onPressed: () {
-                      if (!_formKey.currentState!.validate()) {
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: theme.colorScheme.primary,
+                      foregroundColor: theme.colorScheme.onPrimary,
+                    ),
+                    onPressed: () async {
+                      if (widget.plan.id == null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Plan has not been saved yet.'),
+                          ),
+                        );
                         return;
                       }
+                      
+                      if (!_formKey.currentState!.validate()) return;
+
                       _formKey.currentState!.save();
 
                       final finalizedTimestamp = DateTime(
-                        _date.year,
-                        _date.month,
-                        _date.day,
-                        _time.hour,
-                        _time.minute,
+                        _selectedDate.year,
+                        _selectedDate.month,
+                        _selectedDate.day,
+                        _selectedTime.hour,
+                        _selectedTime.minute,
                       );
 
-                      widget.onSave(
+                      // Await the asynchronous database insertion
+                      await widget.onSave(
                         context,
-                        ref,
                         _localMealItem,
                         finalizedTimestamp,
                       );
+
+                      if (mounted) {
+                        Navigator.of(context).pop();
+                      }
                     },
-                    child: const Text('Save'),
+                    child: Text(i18n.save ?? 'Save'),
                   ),
                 ),
+
                 const SizedBox(height: 20),
+
+                // --- History List ---
                 Text(
-                  i18n.recentlyUsedIngredients,
-                  style: const TextStyle(fontWeight: FontWeight.bold),
+                  i18n.recentlyUsedIngredients ?? 'Recently Used',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(height: 10),
                 Expanded(
-                  child: filteredSuggestions.isEmpty
-                      ? Center(child: Text(i18n.noEntries))
+                  child: filteredLogs.isEmpty
+                      ? Center(
+                          child: Text(i18n.noEntries ?? 'No entries found'),
+                        )
                       : ListView.builder(
-                          itemCount: filteredSuggestions.length,
+                          itemCount: filteredLogs.length,
                           itemBuilder: (context, index) {
-                            final historicalItem = filteredSuggestions[index];
+                            final logItem = filteredLogs[index];
+                            final ingredient = logItem.ingredient;
+                            if (ingredient == null)
+                              return const SizedBox.shrink(); // Await hydration
+
                             return Card(
                               margin: const EdgeInsets.symmetric(vertical: 4.0),
                               child: ListTile(
-                                title: Text(historicalItem['name'] ?? ''),
-                                subtitle: Text(historicalItem['macros'] ?? ''),
-                                trailing: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    IconButton(
-                                      icon: const Icon(Icons.info_outline),
-                                      onPressed: () {
-                                        showDialog(
-                                          context: context,
-                                          builder: (ctx) => AlertDialog(
-                                            title: Text(
-                                              historicalItem['name'].toString(),
-                                            ),
-                                            content: Text(
-                                              'Static historical data info block for ${historicalItem['name']}',
-                                            ),
-                                            actions: [
-                                              TextButton(
-                                                onPressed: () =>
-                                                    Navigator.pop(ctx),
-                                                child: const Text('Close'),
-                                              ),
-                                            ],
-                                          ),
-                                        );
-                                      },
-                                    ),
-                                    const Icon(Icons.copy, color: Colors.grey),
-                                  ],
+                                title: Text(ingredient.name),
+                                // Utilizing domain model values directly
+                                subtitle: Text(
+                                  '${logItem.amount}g • ${logItem.nutritionalValues.energy.toStringAsFixed(0)} kcal',
                                 ),
-                                onTap: () {
-                                  selectIngredient({
-                                    'id': historicalItem['id'],
-                                    'name': historicalItem['name'],
-                                  }, historicalItem['amount'] as num?);
-                                },
+                                trailing: IconButton(
+                                  icon: const Icon(Icons.info_outline),
+                                  onPressed: () {
+                                    showDialog(
+                                      context: context,
+                                      builder: (ctx) => AlertDialog(
+                                        title: Text(ingredient.name),
+                                        content: Text(
+                                          'ID: ${ingredient.id}\nBase Energy: ${ingredient.energy} kJ/100g',
+                                        ),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () => Navigator.pop(ctx),
+                                            child: Text(i18n.close ?? 'Close'),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  },
+                                ),
+                                onTap: () => _selectIngredient(
+                                  ingredient,
+                                  logItem.amount.toDouble(),
+                                ),
                               ),
                             );
                           },
