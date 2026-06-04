@@ -2,7 +2,6 @@ import 'package:json_annotation/json_annotation.dart';
 
 part 'ingredient_image.g.dart';
 
-
 @JsonSerializable()
 class IngredientImage {
   @JsonKey(required: true)

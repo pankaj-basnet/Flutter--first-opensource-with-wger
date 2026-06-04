@@ -29,7 +29,6 @@ part 'database.g.dart';
     MealTable,
     MealItemTable,
     LogItemTable,
-
   ],
 )
 class DriftPowersyncDatabase extends _$DriftPowersyncDatabase {
@@ -43,8 +42,7 @@ class DriftPowersyncDatabase extends _$DriftPowersyncDatabase {
     return MigrationStrategy(
       onCreate: (m) async {},
       onUpgrade: (m, from, to) async {
-        if (from == 1) {
-        }
+        if (from == 1) {}
       },
     );
   }

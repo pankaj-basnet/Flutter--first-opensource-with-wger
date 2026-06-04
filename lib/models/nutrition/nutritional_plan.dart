@@ -19,7 +19,8 @@ class NutritionalPlan {
   factory NutritionalPlan.fromJson(Map<String, dynamic> json) {
     return NutritionalPlan(
       id: json['id']?.toString() ?? '',
-      description: json['name'] as String? ?? json['description'] as String? ?? '',
+      description:
+          json['name'] as String? ?? json['description'] as String? ?? '',
       meals: (json['meals'] as List<dynamic>? ?? [])
           .map((m) => Meal.fromJson(m as Map<String, dynamic>))
           .toList(),

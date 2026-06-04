@@ -21,28 +21,26 @@ class NutritionalPlanTable extends Table {
   BoolColumn get onlyLogging => boolean().named('only_logging')();
   IntColumn get goalEnergy => integer().named('goal_energy').nullable()();
   IntColumn get goalProtein => integer().named('goal_protein').nullable()();
-  IntColumn get goalCarbohydrates => integer().named('goal_carbohydrates').nullable()();
+  IntColumn get goalCarbohydrates =>
+      integer().named('goal_carbohydrates').nullable()();
   IntColumn get goalFiber => integer().named('goal_fiber').nullable()();
   IntColumn get goalFat => integer().named('goal_fat').nullable()();
   BoolColumn get hasGoalCalories => boolean().named('has_goal_calories')();
 }
 
-const PowersyncNutritionalPlanTable = ps.Table(
-  'nutrition_nutritionplan',
-  [
-    ps.Column.text('description'),
-    ps.Column.text('creation_date'),
-    ps.Column.text('start'),
-    ps.Column.text('end'),
-    ps.Column.integer('only_logging'),
-    ps.Column.integer('goal_energy'),
-    ps.Column.integer('goal_protein'),
-    ps.Column.integer('goal_carbohydrates'),
-    ps.Column.integer('goal_fiber'),
-    ps.Column.integer('goal_fat'),
-    ps.Column.integer('has_goal_calories'),
-  ],
-);
+const PowersyncNutritionalPlanTable = ps.Table('nutrition_nutritionplan', [
+  ps.Column.text('description'),
+  ps.Column.text('creation_date'),
+  ps.Column.text('start'),
+  ps.Column.text('end'),
+  ps.Column.integer('only_logging'),
+  ps.Column.integer('goal_energy'),
+  ps.Column.integer('goal_protein'),
+  ps.Column.integer('goal_carbohydrates'),
+  ps.Column.integer('goal_fiber'),
+  ps.Column.integer('goal_fat'),
+  ps.Column.integer('has_goal_calories'),
+]);
 
 /// Diary log entries (`nutrition_logitem`).
 ///
@@ -55,9 +53,11 @@ class LogItemTable extends Table {
   String get tableName => 'nutrition_logitem';
 
   TextColumn get id => text().clientDefault(() => ps.uuid.v7())();
-  TextColumn get planId => text().named('plan_id').references(NutritionalPlanTable, #id)();
+  TextColumn get planId =>
+      text().named('plan_id').references(NutritionalPlanTable, #id)();
   TextColumn get mealId => text().nullable().named('meal_id')();
-  IntColumn get ingredientId => integer().named('ingredient_id').references(IngredientTable, #id)();
+  IntColumn get ingredientId =>
+      integer().named('ingredient_id').references(IngredientTable, #id)();
   IntColumn get weightUnitId => integer().nullable().named('weight_unit_id')();
   DateTimeColumn get datetime => dateTime()();
   RealColumn get amount => real()();
@@ -92,7 +92,8 @@ class MealTable extends Table {
   String get tableName => 'nutrition_meal';
 
   TextColumn get id => text().clientDefault(() => ps.uuid.v7())();
-  TextColumn get planId => text().named('plan_id').references(NutritionalPlanTable, #id)();
+  TextColumn get planId =>
+      text().named('plan_id').references(NutritionalPlanTable, #id)();
   IntColumn get order => integer().withDefault(const Constant(1))();
   TextColumn get time => text().map(const TimeOfDayConverter()).nullable()();
   TextColumn get name => text().withDefault(const Constant(''))();
@@ -124,7 +125,8 @@ class MealItemTable extends Table {
 
   TextColumn get id => text().clientDefault(() => ps.uuid.v7())();
   TextColumn get mealId => text().named('meal_id').references(MealTable, #id)();
-  IntColumn get ingredientId => integer().named('ingredient_id').references(IngredientTable, #id)();
+  IntColumn get ingredientId =>
+      integer().named('ingredient_id').references(IngredientTable, #id)();
   IntColumn get weightUnitId => integer().named('weight_unit_id').nullable()();
   IntColumn get order => integer().withDefault(const Constant(1))();
   RealColumn get amount => real()();

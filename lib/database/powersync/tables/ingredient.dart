@@ -146,4 +146,3 @@ const PowersyncIngredientWeightUnitTable = ps.Table(
     ps.Index('ingredient_idx', [ps.IndexedColumn('ingredient_id')]),
   ],
 );
-

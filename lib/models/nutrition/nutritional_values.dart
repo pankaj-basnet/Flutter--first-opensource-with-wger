@@ -2,10 +2,10 @@
 // Computed macros for a given amount of an ingredient.
 
 class NutritionalValues {
-  final double energy;        // kcal
-  final double protein;       // g
+  final double energy; // kcal
+  final double protein; // g
   final double carbohydrates; // g
-  final double fat;           // g
+  final double fat; // g
 
   const NutritionalValues({
     this.energy = 0,

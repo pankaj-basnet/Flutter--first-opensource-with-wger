@@ -27,7 +27,9 @@ class LogItem {
       mealId: json['mealId']?.toString(),
       ingredientId: mealItem?['ingredientId'] as int? ?? 0,
       weightUnitId: mealItem?['weight_unit_id'] as int?,
-      datetime: DateTime.tryParse(json['datetime']?.toString() ?? '') ?? DateTime.now(),
+      datetime:
+          DateTime.tryParse(json['datetime']?.toString() ?? '') ??
+          DateTime.now(),
       amount: (mealItem?['amount'] as num?)?.toDouble() ?? 0.0,
     );
   }

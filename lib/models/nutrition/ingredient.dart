@@ -9,7 +9,7 @@ class Ingredient {
   final String uuid;
   final String name;
   final int languageId;
-  final int energy;           // kcal per 100 g
+  final int energy; // kcal per 100 g
   final double carbohydrates;
   final double? carbohydratesSugar;
   final double protein;
@@ -25,7 +25,7 @@ class Ingredient {
 
   const Ingredient({
     required this.id,
-    this.uuid = '', 
+    this.uuid = '',
     required this.name,
     this.languageId = 2,
     required this.energy,
