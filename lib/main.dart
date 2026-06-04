@@ -19,8 +19,21 @@ void main() {
   runApp(const ProviderScope(child: MyApp()));
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  late final Future<NutritionalPlan> _planFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _planFuture = _loadPlan();
+  }
 
   /// Fetches the first NutritionalPlan from Django with Basic Auth.
   /// Falls back to embedded mock JSON if the network call fails.
@@ -51,9 +64,13 @@ class MyApp extends StatelessWidget {
             );
           }
         }
+        return NutritionalPlan.fromJson(_mockPlanJson);
       }
-    } catch (_) {
+    } catch (e) {
       // Network unavailable or backend not running — fall through to mock data
+      debugPrint(
+        '[_loadPlan] Backend unreachable, using mock data. Reason: $e',
+      );
     }
     // ── Embedded mock JSON (matches the fixture in the project brief) ──────
     return NutritionalPlan.fromJson(_mockPlanJson);
@@ -67,7 +84,7 @@ class MyApp extends StatelessWidget {
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       home: FutureBuilder<NutritionalPlan>(
-        future: _loadPlan(),
+        future: _planFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Scaffold(

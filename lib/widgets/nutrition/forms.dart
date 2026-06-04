@@ -57,6 +57,33 @@ class IngredientForm extends StatefulWidget {
     this.test = false,
   });
 
+  static const List<Map<String, dynamic>> mockSuggestions = [
+    {
+      'id': 101,
+      'name': 'Oats',
+      'amount': 50.0,
+      'macros': '190 kcal | P: 7g | C: 32g | F: 3g',
+    },
+    {
+      'id': 102,
+      'name': 'Oats Premium',
+      'amount': 50.0,
+      'macros': '250 kcal | P: 10g | C: 30g | F: 5g',
+    },
+    {
+      'id': 202,
+      'name': 'Whey Protein',
+      'amount': 30.0,
+      'macros': '120 kcal | P: 25g | C: 2g | F: 1.5g',
+    },
+    {
+      'id': 303,
+      'name': 'Peanut Butter',
+      'amount': 15.0,
+      'macros': '90 kcal | P: 4g | C: 3g | F: 8g',
+    },
+  ];
+
   @override
   State<IngredientForm> createState() => IngredientFormState();
 }
@@ -65,7 +92,6 @@ class IngredientFormState extends State<IngredientForm> {
   final _formKey = GlobalKey<FormState>();
 
   final _ingredientController = TextEditingController();
-  final _ingredientIdController = TextEditingController();
   final _amountController = TextEditingController();
   final _dateController = TextEditingController();
   final _timeController = TextEditingController();
@@ -76,7 +102,6 @@ class IngredientFormState extends State<IngredientForm> {
   MealItem get mealItem => _localMealItem;
   String _searchQuery = '';
 
-  TextEditingController get ingredientIdController => _ingredientIdController;
   late MealItem _localMealItem;
 
   @override
@@ -92,7 +117,6 @@ class IngredientFormState extends State<IngredientForm> {
   @override
   void dispose() {
     _ingredientController.dispose();
-    _ingredientIdController.dispose();
     _amountController.dispose();
     _dateController.dispose();
     _timeController.dispose();
@@ -124,7 +148,6 @@ class IngredientFormState extends State<IngredientForm> {
         amount: amount ?? 0.0,
       );
       _ingredientController.text = ingredient.name;
-      _ingredientIdController.text = ingredient.id.toString();
       if (amount != null) {
         _amountController.text = amount.toStringAsFixed(0);
       }
@@ -139,7 +162,6 @@ class IngredientFormState extends State<IngredientForm> {
         ingredientId: 0,
         amount: 0.0,
       );
-      _ingredientIdController.text = '';
     });
   }
 
@@ -155,35 +177,11 @@ class IngredientFormState extends State<IngredientForm> {
 
     // Hardcoded layout properties for testing component behavior
     const String staticUnitLabel = 'g';
-    final List<Map<String, dynamic>> mockSuggestions = [
-      {
-        'id': 101,
-        'name': 'Oats',
-        'amount': 50.0,
-        'macros': '190 kcal | P: 7g | C: 32g | F: 3g',
-      },
-      {
-        'id': 102,
-        'name': 'Oats Premium',
-        'amount': 50.0,
-        'macros': '250 kcal | P: 10g | C: 30g | F: 5g',
-      },
-      {
-        'id': 202,
-        'name': 'Whey Protein',
-        'amount': 30.0,
-        'macros': '120 kcal | P: 25g | C: 2g | F: 1.5g',
-      },
-      {
-        'id': 303,
-        'name': 'Peanut Butter',
-        'amount': 15.0,
-        'macros': '90 kcal | P: 4g | C: 3g | F: 8g',
-      },
-    ];
 
     // Filter local suggestions based on user search inputs
-    final filteredSuggestions = mockSuggestions.where((element) {
+    // error - The getter '_mockSuggestions' isn't defined for the type 'IngredientForm'.
+
+    final filteredSuggestions = IngredientForm.mockSuggestions.where((element) {
       final name = element['name'].toString().toLowerCase();
       return name.contains(_searchQuery.toLowerCase());
     }).toList();
@@ -225,6 +223,9 @@ class IngredientFormState extends State<IngredientForm> {
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
                       return 'Please enter or select an ingredient';
+                    }
+                    if (_localMealItem.ingredientId == 0) {
+                      return 'Please select an ingredient from the list';
                     }
                     return null;
                   },
@@ -329,7 +330,7 @@ class IngredientFormState extends State<IngredientForm> {
                     ],
                   ],
                 ),
-                if (_ingredientIdController.text.isNotEmpty &&
+                if (_localMealItem.ingredientId != 0 &&
                     _amountController.text.isNotEmpty)
                   SizedBox(
                     width: double.infinity,
@@ -345,9 +346,7 @@ class IngredientFormState extends State<IngredientForm> {
                           children: [
                             Text('Macros preview', style: titleMediumBoldTheme),
                             const SizedBox(height: 6.0),
-                            Text(
-                              'Ingredient ID: ${_ingredientIdController.text}',
-                            ),
+
                             Text(
                               'Target Mass: ${_amountController.text} $staticUnitLabel',
                             ),
@@ -362,25 +361,27 @@ class IngredientFormState extends State<IngredientForm> {
                   width: double.infinity,
                   child: ElevatedButton(
                     key: const Key('submit-ingredient-button'),
-                    onPressed: () {
-                      if (!_formKey.currentState!.validate()) {
-                        return;
-                      }
+                    onPressed: () async {
+                      if (!_formKey.currentState!.validate()) return;
                       _formKey.currentState!.save();
 
-                      final finalizedTimestamp = DateTime(
+                      final ts = DateTime(
                         _date.year,
                         _date.month,
                         _date.day,
                         _time.hour,
                         _time.minute,
                       );
-
-                      widget.onSave(
-                        context,
-                        _localMealItem,
-                        finalizedTimestamp,
-                      );
+                      try {
+                        await widget.onSave(context, _localMealItem, ts);
+                        if (mounted) Navigator.of(context).pop();
+                      } catch (e) {
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Save failed: $e')),
+                          );
+                        }
+                      }
                     },
                     child: const Text('Save'),
                   ),
@@ -432,12 +433,20 @@ class IngredientFormState extends State<IngredientForm> {
                                     const Icon(Icons.copy, color: Colors.grey),
                                   ],
                                 ),
-                                // onTap: () {
-                                //   selectIngredient({
-                                //     'id': historicalItem['id'],
-                                //     'name': historicalItem['name'],
-                                //   }, historicalItem['amount'] as num?);
-                                // },
+                                onTap: () {
+                                  final ing = Ingredient(
+                                    id: historicalItem['id'] as int,
+                                    name: historicalItem['name'] as String,
+                                    energy: 0,
+                                    carbohydrates: 0,
+                                    protein: 0,
+                                    fat: 0,
+                                  );
+                                  selectIngredient(
+                                    ing,
+                                    historicalItem['amount'] as double?,
+                                  );
+                                },
                               ),
                             );
                           },
