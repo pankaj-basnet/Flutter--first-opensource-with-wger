@@ -1,44 +1,46 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:realflutter/l10n/generated/app_localizations.dart';
+import 'package:realflutter/database/powersync/database.dart';
+import 'package:realflutter/models/nutrition/ingredient.dart';
+import 'package:realflutter/models/nutrition/log.dart';
+import 'package:realflutter/models/nutrition/meal_item.dart';
+import 'package:realflutter/models/nutrition/nutritional_plan.dart';
 
-typedef NutritionalPlan = Map<String, dynamic>;
-typedef MealItem = Map<String, dynamic>;
-typedef LogItem = Map<String, dynamic>;
-
-Widget getIngredientLogForm(NutritionalPlan plan) {
+Widget getIngredientLogForm(NutritionalPlan plan, DriftPowersyncDatabase db) {
   return IngredientForm(
     plan: plan,
+    db: db,
     recent: const [],
-    onSave:
-        (
-          BuildContext context,
-          WidgetRef ref,
-          Map<String, dynamic> meal,
-          DateTime? dt,
-        ) {
-          final i18n = AppLocalizations.of(context);
-
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(i18n.ingredientLogged, textAlign: TextAlign.center),
+    onSave: (BuildContext context, MealItem meal, DateTime? dt) async {
+      // Write log entry to Drift database
+      await db
+          .into(db.logItemTable)
+          .insert(
+            LogItemTableCompanion.insert(
+              planId: plan.id,
+              ingredientId: meal.ingredientId,
+              amount: meal.amount,
+              datetime: dt ?? DateTime.now(),
             ),
           );
-        },
+      if (context.mounted) {
+        final i18n = AppLocalizations.of(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(i18n.ingredientLogged, textAlign: TextAlign.center),
+          ),
+        );
+      }
+    },
     withDate: true,
   );
 }
 
 /// Form to pick an ingredient (and amount) to log to a diary
-class IngredientForm extends ConsumerStatefulWidget {
+class IngredientForm extends StatefulWidget {
   final NutritionalPlan plan;
-  final Function(
-    BuildContext context,
-    WidgetRef ref,
-    MealItem meal,
-    DateTime? dt,
-  )
-  onSave;
+  final DriftPowersyncDatabase db;
+  final Function(BuildContext context, MealItem meal, DateTime? dt) onSave;
   final List<LogItem> recent;
   final bool withDate;
   final String barcode;
@@ -47,6 +49,7 @@ class IngredientForm extends ConsumerStatefulWidget {
   const IngredientForm({
     super.key,
     required this.plan,
+    required this.db,
     required this.recent,
     required this.onSave,
     required this.withDate,
@@ -54,15 +57,41 @@ class IngredientForm extends ConsumerStatefulWidget {
     this.test = false,
   });
 
+  static const List<Map<String, dynamic>> mockSuggestions = [
+    {
+      'id': 101,
+      'name': 'Oats',
+      'amount': 50.0,
+      'macros': '190 kcal | P: 7g | C: 32g | F: 3g',
+    },
+    {
+      'id': 102,
+      'name': 'Oats Premium',
+      'amount': 50.0,
+      'macros': '250 kcal | P: 10g | C: 30g | F: 5g',
+    },
+    {
+      'id': 202,
+      'name': 'Whey Protein',
+      'amount': 30.0,
+      'macros': '120 kcal | P: 25g | C: 2g | F: 1.5g',
+    },
+    {
+      'id': 303,
+      'name': 'Peanut Butter',
+      'amount': 15.0,
+      'macros': '90 kcal | P: 4g | C: 3g | F: 8g',
+    },
+  ];
+
   @override
-  ConsumerState<ConsumerStatefulWidget> createState() => IngredientFormState();
+  State<IngredientForm> createState() => IngredientFormState();
 }
 
-class IngredientFormState extends ConsumerState<IngredientForm> {
+class IngredientFormState extends State<IngredientForm> {
   final _formKey = GlobalKey<FormState>();
 
   final _ingredientController = TextEditingController();
-  final _ingredientIdController = TextEditingController();
   final _amountController = TextEditingController();
   final _dateController = TextEditingController();
   final _timeController = TextEditingController();
@@ -73,20 +102,13 @@ class IngredientFormState extends ConsumerState<IngredientForm> {
   MealItem get mealItem => _localMealItem;
   String _searchQuery = '';
 
-  TextEditingController get ingredientIdController => _ingredientIdController;
   late MealItem _localMealItem;
 
   @override
   void initState() {
     super.initState();
 
-    _localMealItem = {
-      'id': null,
-      'ingredient_id': 0,
-      'amount': 0.0,
-      'weight_unit_id': null,
-      'ingredient_name': '',
-    };
+    _localMealItem = MealItem(id: '', mealId: '', ingredientId: 0, amount: 0.0);
 
     _synchronizeDateDisplay();
     _synchronizeTimeDisplay();
@@ -95,7 +117,6 @@ class IngredientFormState extends ConsumerState<IngredientForm> {
   @override
   void dispose() {
     _ingredientController.dispose();
-    _ingredientIdController.dispose();
     _amountController.dispose();
     _dateController.dispose();
     _timeController.dispose();
@@ -118,24 +139,29 @@ class IngredientFormState extends ConsumerState<IngredientForm> {
     });
   }
 
-  void selectIngredient(Map<String, dynamic> ingredient, num? amount) {
+  void selectIngredient(Ingredient ingredient, double? amount) {
     setState(() {
-      _localMealItem['ingredient_id'] = ingredient['id'];
-      _localMealItem['ingredient_name'] = ingredient['name'];
-      _ingredientController.text = ingredient['name'] ?? '';
-      _ingredientIdController.text = (ingredient['id'] ?? '').toString();
-
+      _localMealItem = MealItem(
+        id: '',
+        mealId: '',
+        ingredientId: ingredient.id,
+        amount: amount ?? 0.0,
+      );
+      _ingredientController.text = ingredient.name;
       if (amount != null) {
         _amountController.text = amount.toStringAsFixed(0);
-        _localMealItem['amount'] = amount.toDouble();
       }
     });
   }
 
   void unSelectIngredient() {
     setState(() {
-      _localMealItem['ingredient_id'] = 0;
-      _ingredientIdController.text = '';
+      _localMealItem = MealItem(
+        id: '',
+        mealId: '',
+        ingredientId: 0,
+        amount: 0.0,
+      );
     });
   }
 
@@ -151,35 +177,11 @@ class IngredientFormState extends ConsumerState<IngredientForm> {
 
     // Hardcoded layout properties for testing component behavior
     const String staticUnitLabel = 'g';
-    final List<Map<String, dynamic>> mockSuggestions = [
-      {
-        'id': 101,
-        'name': 'Oats',
-        'amount': 50.0,
-        'macros': '190 kcal | P: 7g | C: 32g | F: 3g',
-      },
-      {
-        'id': 102,
-        'name': 'Oats Premium',
-        'amount': 50.0,
-        'macros': '250 kcal | P: 10g | C: 30g | F: 5g',
-      },
-      {
-        'id': 202,
-        'name': 'Whey Protein',
-        'amount': 30.0,
-        'macros': '120 kcal | P: 25g | C: 2g | F: 1.5g',
-      },
-      {
-        'id': 303,
-        'name': 'Peanut Butter',
-        'amount': 15.0,
-        'macros': '90 kcal | P: 4g | C: 3g | F: 8g',
-      },
-    ];
 
     // Filter local suggestions based on user search inputs
-    final filteredSuggestions = mockSuggestions.where((element) {
+    // error - The getter '_mockSuggestions' isn't defined for the type 'IngredientForm'.
+
+    final filteredSuggestions = IngredientForm.mockSuggestions.where((element) {
       final name = element['name'].toString().toLowerCase();
       return name.contains(_searchQuery.toLowerCase());
     }).toList();
@@ -222,6 +224,9 @@ class IngredientFormState extends ConsumerState<IngredientForm> {
                     if (value == null || value.trim().isEmpty) {
                       return 'Please enter or select an ingredient';
                     }
+                    if (_localMealItem.ingredientId == 0) {
+                      return 'Please select an ingredient from the list';
+                    }
                     return null;
                   },
                 ),
@@ -246,7 +251,9 @@ class IngredientFormState extends ConsumerState<IngredientForm> {
                           setState(() {
                             final parsedVal = double.tryParse(value);
                             if (parsedVal != null) {
-                              _localMealItem['amount'] = parsedVal;
+                              _localMealItem = _localMealItem.copyWith(
+                                amount: parsedVal,
+                              );
                             }
                           });
                         },
@@ -323,7 +330,7 @@ class IngredientFormState extends ConsumerState<IngredientForm> {
                     ],
                   ],
                 ),
-                if (_ingredientIdController.text.isNotEmpty &&
+                if (_localMealItem.ingredientId != 0 &&
                     _amountController.text.isNotEmpty)
                   SizedBox(
                     width: double.infinity,
@@ -339,9 +346,7 @@ class IngredientFormState extends ConsumerState<IngredientForm> {
                           children: [
                             Text('Macros preview', style: titleMediumBoldTheme),
                             const SizedBox(height: 6.0),
-                            Text(
-                              'Ingredient ID: ${_ingredientIdController.text}',
-                            ),
+
                             Text(
                               'Target Mass: ${_amountController.text} $staticUnitLabel',
                             ),
@@ -356,26 +361,27 @@ class IngredientFormState extends ConsumerState<IngredientForm> {
                   width: double.infinity,
                   child: ElevatedButton(
                     key: const Key('submit-ingredient-button'),
-                    onPressed: () {
-                      if (!_formKey.currentState!.validate()) {
-                        return;
-                      }
+                    onPressed: () async {
+                      if (!_formKey.currentState!.validate()) return;
                       _formKey.currentState!.save();
 
-                      final finalizedTimestamp = DateTime(
+                      final ts = DateTime(
                         _date.year,
                         _date.month,
                         _date.day,
                         _time.hour,
                         _time.minute,
                       );
-
-                      widget.onSave(
-                        context,
-                        ref,
-                        _localMealItem,
-                        finalizedTimestamp,
-                      );
+                      try {
+                        await widget.onSave(context, _localMealItem, ts);
+                        if (mounted) Navigator.of(context).pop();
+                      } catch (e) {
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Save failed: $e')),
+                          );
+                        }
+                      }
                     },
                     child: const Text('Save'),
                   ),
@@ -428,10 +434,18 @@ class IngredientFormState extends ConsumerState<IngredientForm> {
                                   ],
                                 ),
                                 onTap: () {
-                                  selectIngredient({
-                                    'id': historicalItem['id'],
-                                    'name': historicalItem['name'],
-                                  }, historicalItem['amount'] as num?);
+                                  final ing = Ingredient(
+                                    id: historicalItem['id'] as int,
+                                    name: historicalItem['name'] as String,
+                                    energy: 0,
+                                    carbohydrates: 0,
+                                    protein: 0,
+                                    fat: 0,
+                                  );
+                                  selectIngredient(
+                                    ing,
+                                    historicalItem['amount'] as double?,
+                                  );
                                 },
                               ),
                             );
