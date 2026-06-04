@@ -43,20 +43,24 @@ class Meal {
     this.name = name ?? '';
   }
 
-factory Meal.fromJson(Map<String, dynamic> json) {
-  return Meal(
-    id: json['id'] as String?,
-    name: json['name'] as String,
-    time: json['time'] != null ? TimeOfDay(
-      hour: int.parse(json['time'].split(':')[0]),
-      minute: int.parse(json['time'].split(':')[1]),
-    ) : null,
-    // Map the list of mealItems correctly
-    mealItems: (json['mealItems'] as List<dynamic>?)
-        ?.map((item) => MealItem.fromJson(item as Map<String, dynamic>))
-        .toList() ?? [],
-  );
-}
+  factory Meal.fromJson(Map<String, dynamic> json) {
+    return Meal(
+      id: json['id'] as String?,
+      name: json['name'] as String? ?? 'Unnamed Meal',
+      time: json['time'] != null
+          ? TimeOfDay(
+              hour: int.parse(json['time'].split(':')[0]),
+              minute: int.parse(json['time'].split(':')[1]),
+            )
+          : null,
+      // Map the list of mealItems correctly
+      mealItems:
+          (json['mealItems'] as List<dynamic>?)
+              ?.map((item) => MealItem.fromJson(item as Map<String, dynamic>))
+              .toList() ??
+          [],
+    );
+  }
   Meal.fromDrift({
     this.id,
     required String planId,

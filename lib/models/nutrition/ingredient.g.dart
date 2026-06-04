@@ -7,27 +7,7 @@ part of 'ingredient.dart';
 // **************************************************************************
 
 Ingredient _$IngredientFromJson(Map<String, dynamic> json) {
-  $checkKeys(
-    json,
-    requiredKeys: const [
-      'id',
-      'remote_id',
-      'source_name',
-      'source_url',
-      'license_object_url',
-      'code',
-      'name',
-      'created',
-      'energy',
-      'carbohydrates',
-      'carbohydrates_sugar',
-      'protein',
-      'fat',
-      'fat_saturated',
-      'fiber',
-      'sodium',
-    ],
-  );
+  $checkKeys(json, requiredKeys: const ['id']);
   return Ingredient(
     remoteId: json['remote_id'] as String?,
     sourceName: json['source_name'] as String?,

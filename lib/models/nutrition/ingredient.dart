@@ -24,61 +24,61 @@ class Ingredient {
   @JsonKey(required: true)
   final int id;
 
-  @JsonKey(required: true, name: 'remote_id')
+  @JsonKey( name: 'remote_id')
   final String? remoteId;
 
   final int? languageId;
 
-  @JsonKey(required: true, name: 'source_name')
+  @JsonKey( name: 'source_name')
   final String? sourceName;
 
-  @JsonKey(required: true, name: 'source_url')
+  @JsonKey(name: 'source_url')
   final String? sourceUrl;
 
-  @JsonKey(required: true, name: 'license_object_url')
+  @JsonKey( name: 'license_object_url')
   final String? licenseObjectURl;
 
-  @JsonKey(required: true)
+  @JsonKey()
   final String? code;
 
-  @JsonKey(required: true)
+  @JsonKey()
   final String name;
 
-  @JsonKey(required: true, name: 'created')
+  @JsonKey( name: 'created')
   final DateTime created;
 
-  @JsonKey(required: true)
+  @JsonKey()
   final int energy;
 
-  @JsonKey(required: true, fromJson: stringToNum, toJson: numToString)
+  @JsonKey( fromJson: stringToNum, toJson: numToString)
   final num carbohydrates;
 
   @JsonKey(
-    required: true,
+    
     fromJson: stringToNumNull,
     toJson: numToString,
     name: 'carbohydrates_sugar',
   )
   final num? carbohydratesSugar;
 
-  @JsonKey(required: true, fromJson: stringToNum, toJson: numToString)
+  @JsonKey( fromJson: stringToNum, toJson: numToString)
   final num protein;
 
-  @JsonKey(required: true, fromJson: stringToNum, toJson: numToString)
+  @JsonKey(fromJson: stringToNum, toJson: numToString)
   final num fat;
 
   @JsonKey(
-    required: true,
+    
     fromJson: stringToNumNull,
     toJson: numToString,
     name: 'fat_saturated',
   )
   final num? fatSaturated;
 
-  @JsonKey(required: true, fromJson: stringToNumNull, toJson: numToString)
+  @JsonKey( fromJson: stringToNumNull, toJson: numToString)
   final num? fiber;
 
-  @JsonKey(required: true, fromJson: stringToNumNull, toJson: numToString)
+  @JsonKey(fromJson: stringToNumNull, toJson: numToString)
   final num? sodium;
 
   @JsonKey(name: 'is_vegan')

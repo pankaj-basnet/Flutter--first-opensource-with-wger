@@ -47,19 +47,21 @@ class LogItem {
     datetime = dateTime ?? DateTime.now();
     amount = mealItem.amount;
   }
-  
+
   factory LogItem.fromJson(Map<String, dynamic> json) {
+    // Ensure we safely isolate nested map parsing issues
+    final mealItemMap = json['mealItem'] as Map<String, dynamic>? ?? {};
+    final mealItem = MealItem.fromJson(mealItemMap);
 
-  final mealItem = MealItem.fromJson(json['mealItem'] as Map<String, dynamic>);
-  
-
-  return LogItem.fromMealItem(
-    mealItem,
-    json['planId'] as String,
-    json['mealId'] as String?,
-    DateTime.parse(json['datetime'] as String),
-  );
-}
+    return LogItem.fromMealItem(
+      mealItem,
+      (json['planId'] as String?) ?? '',
+      json['mealId'] as String?,
+      json['datetime'] != null
+          ? DateTime.parse(json['datetime'] as String)
+          : DateTime.now(),
+    );
+  }
 
   LogItemTableCompanion toCompanion() {
     return LogItemTableCompanion(

@@ -39,7 +39,7 @@ class MealItem {
   }
 
   MealItem.empty() : ingredientId = 0, mealId = '', amount = 0;
-  
+
   MealItem.fromDrift({
     this.id,
     required String mealId,
@@ -57,14 +57,14 @@ class MealItem {
   factory MealItem.fromJson(Map<String, dynamic> json) {
     return MealItem(
       id: json['id'] as String?,
-      mealId: json['mealId'] as String,
-      ingredientId: json['ingredientId'] as int,
-      amount: json['amount'] as num,
-      // If the API provides the full ingredient object, hydrate it here
-      ingredient: json['ingredient'] != null
-          ? Ingredient.fromJson(json['ingredient'] as Map<String, dynamic>)
-          : null,
-    );
+     // Use an empty string or standard fallback instead of throwing an error
+    mealId: (json['mealId'] as String?) ?? '', 
+    ingredientId: (json['ingredientId'] as int?) ?? 0,
+    amount: (json['amount'] as num?) ?? 0,
+    ingredient: json['ingredient'] != null
+        ? Ingredient.fromJson(json['ingredient'] as Map<String, dynamic>)
+        : null,
+  );
   }
 
   MealItemTableCompanion toCompanion() {

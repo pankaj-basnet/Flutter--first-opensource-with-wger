@@ -24,7 +24,7 @@
     },
     {
       "id": "meal-uuid-002",
-      "name": "Breakfast",
+      "name": "snacks",
       "time": "08:00",
       "mealItems": [
         {
@@ -32,9 +32,9 @@
           "ingredientId": 102,
           "amount": 100,
           "ingredient": {
-            "id": 102,
-            "name": "Oatmeal",
-            "energy": 389,
+            "id": 104,
+            "name": "juice",
+            "energy": 285,
             "protein": 13,
             "carbohydrates": 66,
             "fat": 7
@@ -43,5 +43,30 @@
       ]
     }
   ],
-  "diaryEntries": []
+  "diaryEntries": [
+    {
+      "planId": "plan-uuid-001",
+      "mealId": "meal-uuid-001",
+      "datetime": "2026-06-03T08:00:00Z",
+      "mealItem": {
+        "id": "item-uuid-001",
+        "mealId": "meal-uuid-001",
+        "ingredientId": 101,
+        "amount": 100,
+        "ingredient": {
+          "id": 101,
+          "name": "Oatmeal (History Mock)",
+          "created": "2026-06-03T12:00:00Z",
+          "energy": 389,
+          "carbohydrates": "66.0",
+          "protein": "13.0",
+          "fat": "7.0",
+          "is_vegan": true,
+          "is_vegetarian": true,
+          "nutriscore": "a",
+          "weight_units": []
+        }
+      }
+    }
+  ]
 }
