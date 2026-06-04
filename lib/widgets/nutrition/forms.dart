@@ -1,44 +1,50 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:realflutter/l10n/generated/app_localizations.dart';
+import 'package:realflutter/database/powersync/database.dart';
+import 'package:realflutter/models/nutrition/ingredient.dart';
+import 'package:realflutter/models/nutrition/log.dart';
+import 'package:realflutter/models/nutrition/meal_item.dart';
+import 'package:realflutter/models/nutrition/nutritional_plan.dart';
+// typedef NutritionalPlan = Map<String, dynamic>;
+// typedef MealItem = Map<String, dynamic>;
+// typedef LogItem = Map<String, dynamic>;
 
-typedef NutritionalPlan = Map<String, dynamic>;
-typedef MealItem = Map<String, dynamic>;
-typedef LogItem = Map<String, dynamic>;
-
-Widget getIngredientLogForm(NutritionalPlan plan) {
+Widget getIngredientLogForm(NutritionalPlan plan, DriftPowersyncDatabase db) {
   return IngredientForm(
     plan: plan,
+    db: db,
     recent: const [],
-    onSave:
-        (
-          BuildContext context,
-          WidgetRef ref,
-          Map<String, dynamic> meal,
-          DateTime? dt,
-        ) {
-          final i18n = AppLocalizations.of(context);
-
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(i18n.ingredientLogged, textAlign: TextAlign.center),
+    onSave: (BuildContext context, MealItem meal, DateTime? dt) async {
+      // Write log entry to Drift database
+      await db
+          .into(db.logItemTable)
+          .insert(
+            LogItemTableCompanion.insert(
+              planId: plan.id!,
+              ingredientId: meal.ingredientId,
+              amount: meal.amount,
+              datetime: dt ?? DateTime.now(),
             ),
           );
-        },
+      if (context.mounted) {
+        final i18n = AppLocalizations.of(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(i18n.ingredientLogged, textAlign: TextAlign.center),
+          ),
+        );
+      }
+    },
     withDate: true,
   );
 }
 
 /// Form to pick an ingredient (and amount) to log to a diary
-class IngredientForm extends ConsumerStatefulWidget {
+class IngredientForm extends StatefulWidget {
   final NutritionalPlan plan;
-  final Function(
-    BuildContext context,
-    WidgetRef ref,
-    MealItem meal,
-    DateTime? dt,
-  )
-  onSave;
+  final DriftPowersyncDatabase db;
+  final Function(BuildContext context, MealItem meal, DateTime? dt) onSave;
   final List<LogItem> recent;
   final bool withDate;
   final String barcode;
@@ -47,6 +53,7 @@ class IngredientForm extends ConsumerStatefulWidget {
   const IngredientForm({
     super.key,
     required this.plan,
+    required this.db,
     required this.recent,
     required this.onSave,
     required this.withDate,
@@ -55,10 +62,10 @@ class IngredientForm extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<ConsumerStatefulWidget> createState() => IngredientFormState();
+  State<IngredientForm> createState() => IngredientFormState();
 }
 
-class IngredientFormState extends ConsumerState<IngredientForm> {
+class IngredientFormState extends State<IngredientForm> {
   final _formKey = GlobalKey<FormState>();
 
   final _ingredientController = TextEditingController();
@@ -80,13 +87,7 @@ class IngredientFormState extends ConsumerState<IngredientForm> {
   void initState() {
     super.initState();
 
-    _localMealItem = {
-      'id': null,
-      'ingredient_id': 0,
-      'amount': 0.0,
-      'weight_unit_id': null,
-      'ingredient_name': '',
-    };
+    _localMealItem = MealItem(id: '', mealId: '', ingredientId: 0, amount: 0.0);
 
     _synchronizeDateDisplay();
     _synchronizeTimeDisplay();
@@ -118,23 +119,30 @@ class IngredientFormState extends ConsumerState<IngredientForm> {
     });
   }
 
-  void selectIngredient(Map<String, dynamic> ingredient, num? amount) {
+  void selectIngredient(Ingredient ingredient, double? amount) {
     setState(() {
-      _localMealItem['ingredient_id'] = ingredient['id'];
-      _localMealItem['ingredient_name'] = ingredient['name'];
-      _ingredientController.text = ingredient['name'] ?? '';
-      _ingredientIdController.text = (ingredient['id'] ?? '').toString();
-
+      _localMealItem = MealItem(
+        id: '',
+        mealId: '',
+        ingredientId: ingredient.id,
+        amount: amount ?? 0.0,
+      );
+      _ingredientController.text = ingredient.name;
+      _ingredientIdController.text = ingredient.id.toString();
       if (amount != null) {
         _amountController.text = amount.toStringAsFixed(0);
-        _localMealItem['amount'] = amount.toDouble();
       }
     });
   }
 
   void unSelectIngredient() {
     setState(() {
-      _localMealItem['ingredient_id'] = 0;
+      _localMealItem = MealItem(
+        id: '',
+        mealId: '',
+        ingredientId: 0,
+        amount: 0.0,
+      );
       _ingredientIdController.text = '';
     });
   }
@@ -246,7 +254,9 @@ class IngredientFormState extends ConsumerState<IngredientForm> {
                           setState(() {
                             final parsedVal = double.tryParse(value);
                             if (parsedVal != null) {
-                              _localMealItem['amount'] = parsedVal;
+                              _localMealItem = _localMealItem.copyWith(
+                                amount: parsedVal,
+                              );
                             }
                           });
                         },
@@ -372,7 +382,6 @@ class IngredientFormState extends ConsumerState<IngredientForm> {
 
                       widget.onSave(
                         context,
-                        ref,
                         _localMealItem,
                         finalizedTimestamp,
                       );
@@ -427,12 +436,12 @@ class IngredientFormState extends ConsumerState<IngredientForm> {
                                     const Icon(Icons.copy, color: Colors.grey),
                                   ],
                                 ),
-                                onTap: () {
-                                  selectIngredient({
-                                    'id': historicalItem['id'],
-                                    'name': historicalItem['name'],
-                                  }, historicalItem['amount'] as num?);
-                                },
+                                // onTap: () {
+                                //   selectIngredient({
+                                //     'id': historicalItem['id'],
+                                //     'name': historicalItem['name'],
+                                //   }, historicalItem['amount'] as num?);
+                                // },
                               ),
                             );
                           },
