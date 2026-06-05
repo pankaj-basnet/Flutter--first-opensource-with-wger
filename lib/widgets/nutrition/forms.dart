@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:realflutter/l10n/generated/app_localizations.dart';
+import 'package:realflutter/theme/theme.dart';
+import 'package:realflutter/widgets/nutrition/meal_component.dart';
+import 'package:realflutter/widgets/nutrition/meal_form.dart';
+import 'package:realflutter/widgets/nutrition/nutritional_plan_detail.dart';
+import 'package:realflutter/widgets/nutrition/plan_form.dart';
 
 typedef NutritionalPlan = Map<String, dynamic>;
 typedef MealItem = Map<String, dynamic>;
 typedef LogItem = Map<String, dynamic>;
+typedef Meal = Map<String, dynamic>;
 
 Widget getIngredientLogForm(NutritionalPlan plan) {
   return IngredientForm(
@@ -75,6 +81,8 @@ class IngredientFormState extends ConsumerState<IngredientForm> {
 
   TextEditingController get ingredientIdController => _ingredientIdController;
   late MealItem _localMealItem;
+  List<Meal> get _meals =>
+      (widget.plan['meals'] as List?)?.cast<Meal>() ?? [];
 
   @override
   void initState() {
@@ -438,10 +446,106 @@ class IngredientFormState extends ConsumerState<IngredientForm> {
                           },
                         ),
                 ),
+
+                // slivers: [
+                //   // ── Plan summary card ──────────────────────────────────────
+                //   SliverToBoxAdapter(
+                //     child: NutritionalPlanHeaderCard(
+                //       plan: plan,
+                //       onEdit: () => _navigateToPlanForm(context),
+                //     ),
+                //   ),
+
+                NutritionalPlanHeaderCard(plan: widget.plan,  onEdit: () => _navigateToPlanForm(context),),
+
+                
+          // -- Meals --
+          // SliverToBoxAdapter(
+            // child:
+             Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
+              child: Row(
+                children: [
+                  Text(
+                    'Meals',
+                    style:
+                        Theme.of(context).textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: kPrimaryColor,
+                            ),
+                  ),
+                  const Spacer(),
+                  TextButton.icon(
+                    icon: const Icon(Icons.add, size: 16),
+                    label: const Text('Add meal'),
+                    onPressed: () => _navigateToMealForm(context, null),
+                  ),
+                ],
+              ),
+            ),
+
+          if (_meals.isEmpty)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Center(
+                  child: Column(
+                    children: [
+                      Icon(Icons.no_meals,
+                          size: 48,
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onSurfaceVariant),
+                      const SizedBox(height: 8),
+                      Text(
+                        'No meals in this plan yet.\nTap "Add meal" to get started.',
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            )
+          else
+            SliverList.builder(
+              itemCount: _meals.length,
+              itemBuilder: (ctx, i) {
+                final meal = _meals[i];
+                return MealSummarySection(
+                  meal: meal,
+                  // onAddIngredient: () => _navigateToMealItemForm(ctx, meal),
+                  onAddIngredient: () => {},
+                  onEditMeal: () => _navigateToMealForm(ctx, meal),
+                );
+              },
+            ),
               ],
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  
+  // void _navigateToMealItemForm(BuildContext context, Meal meal) {
+  //   Navigator.of(context).push(
+  //     MaterialPageRoute(builder: (_) => getMealItemForm(meal, const [])),
+  //   );
+  // }
+
+  void _navigateToPlanForm(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => PlanForm(widget.plan)),
+    );
+  }
+
+  void _navigateToMealForm(BuildContext context, Meal? meal) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) =>
+            MealForm(widget.plan['id'] as int? ?? 0, meal: meal),
       ),
     );
   }
