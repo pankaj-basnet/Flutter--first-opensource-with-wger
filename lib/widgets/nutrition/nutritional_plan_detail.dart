@@ -3,10 +3,12 @@ import 'package:realflutter/theme/theme.dart';
 import 'package:realflutter/widgets/nutrition/widgets.dart';
 
 // -- Primitive type aliases --
-typedef NutritionalPlan = Map<String, dynamic>;
-typedef MealItem = Map<String, dynamic>;
-typedef LogItem = Map<String, dynamic>;
-typedef Meal = Map<String, dynamic>;
+// typedef NutritionalPlan = Map<String, dynamic>;
+// typedef MealItem = Map<String, dynamic>;
+// typedef LogItem = Map<String, dynamic>;
+// typedef Meal = Map<String, dynamic>;
+
+import 'package:realflutter/models/nutrition/nutritional_plan.dart';
 
 // -- Theme helpers --
 class _RF {
@@ -39,23 +41,28 @@ class NutritionalPlanHeaderCard extends StatelessWidget {
   });
 
   String _planLabel() {
-    final desc = plan['description'] as String? ?? '';
-    return desc.isNotEmpty ? desc : 'Nutritional Plan #${plan['id'] ?? '–'}';
+    final desc = plan.description; 
+    return desc.isNotEmpty ? desc : 'Nutritional Plan #${plan.id}';
   }
 
   String _dateRange() {
-    final start = plan['creation_date'] as String? ?? '–';
-    final end = plan['end_date'] as String?;
-    if (end != null && end.isNotEmpty) return '$start → $end';
-    return '$start (open-ended)';
+    // final start = plan['creation_date'] as String? ?? '–';
+    // final end = plan['end_date'] as String?;
+    // if (end != null && end.isNotEmpty) return '$start → $end';
+    // return '$start (open-ended)';
+    return 'Active Plan (Open-ended)';
   }
 
   @override
   Widget build(BuildContext context) {
-    final goalKcal = (plan['goal_energy'] as num?)?.toDouble() ?? 0;
-    final goalProtein = (plan['goal_protein'] as num?)?.toDouble() ?? 0;
-    final goalCarbs = (plan['goal_carbohydrates'] as num?)?.toDouble() ?? 0;
-    final goalFat = (plan['goal_fat'] as num?)?.toDouble() ?? 0;
+    // final goalKcal = (plan['goal_energy'] as num?)?.toDouble() ?? 0;
+    // final goalProtein = (plan['goal_protein'] as num?)?.toDouble() ?? 0;
+    // final goalCarbs = (plan['goal_carbohydrates'] as num?)?.toDouble() ?? 0;
+    // final goalFat = (plan['goal_fat'] as num?)?.toDouble() ?? 0;
+    final double goalKcal = 0; 
+    final double goalProtein = 0;
+    final double goalCarbs = 0;
+    final double goalFat = 0;
 
     return Card(
       margin: const EdgeInsets.fromLTRB(16, 12, 16, 4),

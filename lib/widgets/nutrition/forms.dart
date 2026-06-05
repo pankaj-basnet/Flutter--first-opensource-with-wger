@@ -10,7 +10,6 @@ import 'package:realflutter/models/nutrition/ingredient.dart';
 import 'package:realflutter/models/nutrition/log.dart';
 import 'package:realflutter/models/nutrition/meal_item.dart';
 import 'package:realflutter/models/nutrition/nutritional_plan.dart';
-typedef Meal = Map<String, dynamic>;
 
 Widget getIngredientLogForm(NutritionalPlan plan, DriftPowersyncDatabase db) {
   return IngredientForm(

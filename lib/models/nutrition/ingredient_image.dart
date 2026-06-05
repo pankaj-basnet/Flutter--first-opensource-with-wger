@@ -44,3 +44,4 @@ class IngredientImage {
 
   Map<String, dynamic> toJson() => _$IngredientImageToJson(this);
 }
+D:\src_dev\flutter\F-fowd--realworld-wger-\may29-\CODE-\realflutter\lib\models\nutrition\ingredient_image.dart
