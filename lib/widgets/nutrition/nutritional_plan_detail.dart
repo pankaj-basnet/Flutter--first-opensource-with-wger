@@ -1,33 +1,11 @@
+
 import 'package:flutter/material.dart';
+import 'package:realflutter/models/nutrition/nutritional_plan.dart';
 import 'package:realflutter/theme/theme.dart';
 import 'package:realflutter/widgets/nutrition/widgets.dart';
 
-// -- Primitive type aliases --
-// typedef NutritionalPlan = Map<String, dynamic>;
-// typedef MealItem = Map<String, dynamic>;
-// typedef LogItem = Map<String, dynamic>;
-// typedef Meal = Map<String, dynamic>;
+// ─── NutritionalPlanHeaderCard ────────────────────────────────────────────────
 
-import 'package:realflutter/models/nutrition/nutritional_plan.dart';
-
-// -- Theme helpers --
-class _RF {
-  static Color primary(BuildContext ctx) => Theme.of(ctx).colorScheme.primary;
-  static Color secondary(BuildContext ctx) =>
-      Theme.of(ctx).colorScheme.secondary;
-  static Color tertiary(BuildContext ctx) => Theme.of(ctx).colorScheme.tertiary;
-  static Color surface(BuildContext ctx) => Theme.of(ctx).colorScheme.surface;
-  static Color onPrimary(BuildContext ctx) =>
-      Theme.of(ctx).colorScheme.onPrimary;
-  static Color primaryContainer(BuildContext ctx) =>
-      Theme.of(ctx).colorScheme.primaryContainer;
-  static TextTheme text(BuildContext ctx) => Theme.of(ctx).textTheme;
-}
-
-// ─── Nutritional Plan header card ────────────────────────────────────────────
-
-/// Mirrors the FlexibleSpaceBar summary from wger's NutritionalPlanScreen.
-/// Displays plan description, date range, and goal calories in a themed card.
 class NutritionalPlanHeaderCard extends StatelessWidget {
   final NutritionalPlan plan;
   final VoidCallback? onEdit;
@@ -40,29 +18,36 @@ class NutritionalPlanHeaderCard extends StatelessWidget {
     this.onDelete,
   });
 
+  // ── Helpers ─────────────────────────────────────────────────────────────────
+
   String _planLabel() {
-    final desc = plan.description; 
-    return desc.isNotEmpty ? desc : 'Nutritional Plan #${plan.id}';
+    // BUG FIX: plan.id is a String — used directly, not cast to int.
+    return plan.description.isNotEmpty
+        ? plan.description
+        : 'Nutritional Plan #${plan.id}';
   }
 
   String _dateRange() {
-    // final start = plan['creation_date'] as String? ?? '–';
-    // final end = plan['end_date'] as String?;
-    // if (end != null && end.isNotEmpty) return '$start → $end';
-    // return '$start (open-ended)';
-    return 'Active Plan (Open-ended)';
+    // BUG FIX: previously always returned a hardcoded static string.
+    // NutritionalPlan.creationDate / endDate are nullable Strings in
+    // the current realflutter model.  We read them safely here.
+    final start = plan.creationDate ?? '–';
+    final end = plan.endDate;
+    if (end != null && end.isNotEmpty) {
+      return '$start → $end';
+    }
+    return '$start (open-ended)';
   }
 
   @override
   Widget build(BuildContext context) {
-    // final goalKcal = (plan['goal_energy'] as num?)?.toDouble() ?? 0;
-    // final goalProtein = (plan['goal_protein'] as num?)?.toDouble() ?? 0;
-    // final goalCarbs = (plan['goal_carbohydrates'] as num?)?.toDouble() ?? 0;
-    // final goalFat = (plan['goal_fat'] as num?)?.toDouble() ?? 0;
-    final double goalKcal = 0; 
-    final double goalProtein = 0;
-    final double goalCarbs = 0;
-    final double goalFat = 0;
+    // BUG FIX: values were hardcoded to 0.0.
+    // NutritionalPlan now carries optional goal fields (see model).
+    final goalKcal = plan.goalEnergy ?? 0.0;
+    final goalProtein = plan.goalProtein ?? 0.0;
+    final goalCarbs = plan.goalCarbohydrates ?? 0.0;
+    final goalFat = plan.goalFat ?? 0.0;
+    final hasGoals = goalKcal > 0 || goalProtein > 0 || goalCarbs > 0 || goalFat > 0;
 
     return Card(
       margin: const EdgeInsets.fromLTRB(16, 12, 16, 4),
@@ -72,10 +57,10 @@ class NutritionalPlanHeaderCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // ── Header banner ──────────────────────────────────────────────
+          // ── Gradient header banner ─────────────────────────────────────
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               gradient: LinearGradient(
                 colors: [kPrimaryColor, kPrimaryButtonColor],
                 begin: Alignment.topLeft,
@@ -90,18 +75,14 @@ class NutritionalPlanHeaderCard extends StatelessWidget {
                     children: [
                       Text(
                         _planLabel(),
-                        style: _RF
-                            .text(context)
+                        style: RF.text(context)
                             .titleLarge
                             ?.copyWith(color: Colors.white),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         _dateRange(),
-                        style: _RF
-                            .text(context)
-                            .bodySmall
-                            ?.copyWith(
+                        style: RF.text(context).bodySmall?.copyWith(
                               color: Colors.white70,
                               fontStyle: FontStyle.italic,
                             ),
@@ -109,7 +90,7 @@ class NutritionalPlanHeaderCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                // Edit / delete pop-up (mirrors NutritionalPlanScreen)
+                // Edit / delete pop-up — mirrors NutritionalPlanScreen.
                 if (onEdit != null || onDelete != null)
                   PopupMenuButton<String>(
                     icon: const Icon(Icons.more_vert, color: Colors.white),
@@ -141,29 +122,38 @@ class NutritionalPlanHeaderCard extends StatelessWidget {
               ],
             ),
           ),
-          // ── Macro goals row ────────────────────────────────────────────
+
+          // ── Macro goals section ────────────────────────────────────────
           Padding(
             padding: const EdgeInsets.all(12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Daily goals',
-                  style: _RF
-                      .text(context)
-                      .labelMedium
-                      ?.copyWith(
-                        color: _RF.primary(context),
+                  hasGoals ? 'Daily goals' : 'No goals set',
+                  style: RF.text(context).labelMedium?.copyWith(
+                        color: RF.primary(context),
                         fontWeight: FontWeight.bold,
                       ),
                 ),
-                const SizedBox(height: 8),
-                NutritionChipRow(
-                  kcal: goalKcal,
-                  protein: goalProtein,
-                  carbs: goalCarbs,
-                  fat: goalFat,
-                ),
+                if (hasGoals) ...[
+                  const SizedBox(height: 8),
+                  NutritionChipRow(
+                    kcal: goalKcal,
+                    protein: goalProtein,
+                    carbs: goalCarbs,
+                    fat: goalFat,
+                  ),
+                ] else ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    'Edit the plan to set daily macro targets.',
+                    style: RF.text(context).bodySmall?.copyWith(
+                          color: RF.onSurfaceVariant(context),
+                          fontStyle: FontStyle.italic,
+                        ),
+                  ),
+                ],
               ],
             ),
           ),

@@ -1,22 +1,39 @@
 // lib/models/nutrition/meal.dart
 
-import 'package:flutter/material.dart' show TimeOfDay;
 import 'package:realflutter/models/nutrition/meal_item.dart';
 
 class Meal {
   final String id;
   final String planId;
   final String name;
-  final TimeOfDay? time;
+  /// Meal time stored as 'HH:mm' string, e.g. '08:30'.
+  final String? time;
   final List<MealItem> mealItems;
 
   const Meal({
     required this.id,
-    this.planId = '',
+    required this.planId,
     this.name = '',
     this.time,
     this.mealItems = const [],
   });
+
+  factory Meal.fromJson(Map<String, dynamic> json) {
+    return Meal(
+      id: json['id']?.toString() ?? '',
+      planId:
+          json['planId']?.toString() ??
+          json['plan_id']?.toString() ??
+          json['plan']?.toString() ??
+          '',
+      name: json['name'] as String? ?? '',
+      time: json['time'] as String?,
+      mealItems: (json['items'] as List<dynamic>? ?? [])
+          .map((i) => MealItem.fromJson(i as Map<String, dynamic>))
+          .toList(),
+    );
+  }
+
 
   Meal.fromDrift({
     required this.id,
@@ -26,23 +43,20 @@ class Meal {
     this.mealItems = const [],
   });
 
-  factory Meal.fromJson(Map<String, dynamic> json) {
-    TimeOfDay? tod;
-    final t = json['time'] as String?;
-    if (t != null) {
-      final parts = t.split(':');
-      if (parts.length >= 2) {
-        tod = TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1]));
-      }
-    }
+
+  Meal copyWith({
+    String? id,
+    String? planId,
+    String? name,
+    String? time,
+    List<MealItem>? mealItems,
+  }) {
     return Meal(
-      id: json['id']?.toString() ?? '',
-      planId: json['plan_id']?.toString() ?? '',
-      name: json['name'] as String? ?? '',
-      time: tod,
-      mealItems: (json['mealItems'] as List<dynamic>? ?? [])
-          .map((i) => MealItem.fromJson(i as Map<String, dynamic>))
-          .toList(),
+      id: id ?? this.id,
+      planId: planId ?? this.planId,
+      name: name ?? this.name,
+      time: time ?? this.time,
+      mealItems: mealItems ?? this.mealItems,
     );
   }
 }

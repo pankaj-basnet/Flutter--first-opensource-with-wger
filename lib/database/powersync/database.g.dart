@@ -4,7 +4,7 @@ part of 'database.dart';
 
 // ignore_for_file: type=lint
 class $NutritionalPlanTableTable extends NutritionalPlanTable
-    with TableInfo<$NutritionalPlanTableTable, NutritionalPlan> {
+    with TableInfo<$NutritionalPlanTableTable, NutritionalPlanTableData> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
@@ -168,7 +168,7 @@ class $NutritionalPlanTableTable extends NutritionalPlanTable
   static const String $name = 'nutrition_nutritionplan';
   @override
   VerificationContext validateIntegrity(
-    Insertable<NutritionalPlan> instance, {
+    Insertable<NutritionalPlanTableData> instance, {
     bool isInserting = false,
   }) {
     final context = VerificationContext();
@@ -276,9 +276,12 @@ class $NutritionalPlanTableTable extends NutritionalPlanTable
   @override
   Set<GeneratedColumn> get $primaryKey => const {};
   @override
-  NutritionalPlan map(Map<String, dynamic> data, {String? tablePrefix}) {
+  NutritionalPlanTableData map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return NutritionalPlan(
+    return NutritionalPlanTableData(
       id: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}id'],
@@ -286,6 +289,46 @@ class $NutritionalPlanTableTable extends NutritionalPlanTable
       description: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}description'],
+      )!,
+      creationDate: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}creation_date'],
+      )!,
+      startDate: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}start'],
+      )!,
+      endDate: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}end'],
+      ),
+      onlyLogging: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}only_logging'],
+      )!,
+      goalEnergy: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}goal_energy'],
+      ),
+      goalProtein: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}goal_protein'],
+      ),
+      goalCarbohydrates: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}goal_carbohydrates'],
+      ),
+      goalFiber: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}goal_fiber'],
+      ),
+      goalFat: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}goal_fat'],
+      ),
+      hasGoalCalories: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}has_goal_calories'],
       )!,
     );
   }
@@ -296,7 +339,248 @@ class $NutritionalPlanTableTable extends NutritionalPlanTable
   }
 }
 
-class NutritionalPlanTableCompanion extends UpdateCompanion<NutritionalPlan> {
+class NutritionalPlanTableData extends DataClass
+    implements Insertable<NutritionalPlanTableData> {
+  final String id;
+  final String description;
+  final DateTime creationDate;
+  final DateTime startDate;
+  final DateTime? endDate;
+  final bool onlyLogging;
+  final int? goalEnergy;
+  final int? goalProtein;
+  final int? goalCarbohydrates;
+  final int? goalFiber;
+  final int? goalFat;
+  final bool hasGoalCalories;
+  const NutritionalPlanTableData({
+    required this.id,
+    required this.description,
+    required this.creationDate,
+    required this.startDate,
+    this.endDate,
+    required this.onlyLogging,
+    this.goalEnergy,
+    this.goalProtein,
+    this.goalCarbohydrates,
+    this.goalFiber,
+    this.goalFat,
+    required this.hasGoalCalories,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['description'] = Variable<String>(description);
+    map['creation_date'] = Variable<DateTime>(creationDate);
+    map['start'] = Variable<DateTime>(startDate);
+    if (!nullToAbsent || endDate != null) {
+      map['end'] = Variable<DateTime>(endDate);
+    }
+    map['only_logging'] = Variable<bool>(onlyLogging);
+    if (!nullToAbsent || goalEnergy != null) {
+      map['goal_energy'] = Variable<int>(goalEnergy);
+    }
+    if (!nullToAbsent || goalProtein != null) {
+      map['goal_protein'] = Variable<int>(goalProtein);
+    }
+    if (!nullToAbsent || goalCarbohydrates != null) {
+      map['goal_carbohydrates'] = Variable<int>(goalCarbohydrates);
+    }
+    if (!nullToAbsent || goalFiber != null) {
+      map['goal_fiber'] = Variable<int>(goalFiber);
+    }
+    if (!nullToAbsent || goalFat != null) {
+      map['goal_fat'] = Variable<int>(goalFat);
+    }
+    map['has_goal_calories'] = Variable<bool>(hasGoalCalories);
+    return map;
+  }
+
+  NutritionalPlanTableCompanion toCompanion(bool nullToAbsent) {
+    return NutritionalPlanTableCompanion(
+      id: Value(id),
+      description: Value(description),
+      creationDate: Value(creationDate),
+      startDate: Value(startDate),
+      endDate: endDate == null && nullToAbsent
+          ? const Value.absent()
+          : Value(endDate),
+      onlyLogging: Value(onlyLogging),
+      goalEnergy: goalEnergy == null && nullToAbsent
+          ? const Value.absent()
+          : Value(goalEnergy),
+      goalProtein: goalProtein == null && nullToAbsent
+          ? const Value.absent()
+          : Value(goalProtein),
+      goalCarbohydrates: goalCarbohydrates == null && nullToAbsent
+          ? const Value.absent()
+          : Value(goalCarbohydrates),
+      goalFiber: goalFiber == null && nullToAbsent
+          ? const Value.absent()
+          : Value(goalFiber),
+      goalFat: goalFat == null && nullToAbsent
+          ? const Value.absent()
+          : Value(goalFat),
+      hasGoalCalories: Value(hasGoalCalories),
+    );
+  }
+
+  factory NutritionalPlanTableData.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return NutritionalPlanTableData(
+      id: serializer.fromJson<String>(json['id']),
+      description: serializer.fromJson<String>(json['description']),
+      creationDate: serializer.fromJson<DateTime>(json['creationDate']),
+      startDate: serializer.fromJson<DateTime>(json['startDate']),
+      endDate: serializer.fromJson<DateTime?>(json['endDate']),
+      onlyLogging: serializer.fromJson<bool>(json['onlyLogging']),
+      goalEnergy: serializer.fromJson<int?>(json['goalEnergy']),
+      goalProtein: serializer.fromJson<int?>(json['goalProtein']),
+      goalCarbohydrates: serializer.fromJson<int?>(json['goalCarbohydrates']),
+      goalFiber: serializer.fromJson<int?>(json['goalFiber']),
+      goalFat: serializer.fromJson<int?>(json['goalFat']),
+      hasGoalCalories: serializer.fromJson<bool>(json['hasGoalCalories']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'description': serializer.toJson<String>(description),
+      'creationDate': serializer.toJson<DateTime>(creationDate),
+      'startDate': serializer.toJson<DateTime>(startDate),
+      'endDate': serializer.toJson<DateTime?>(endDate),
+      'onlyLogging': serializer.toJson<bool>(onlyLogging),
+      'goalEnergy': serializer.toJson<int?>(goalEnergy),
+      'goalProtein': serializer.toJson<int?>(goalProtein),
+      'goalCarbohydrates': serializer.toJson<int?>(goalCarbohydrates),
+      'goalFiber': serializer.toJson<int?>(goalFiber),
+      'goalFat': serializer.toJson<int?>(goalFat),
+      'hasGoalCalories': serializer.toJson<bool>(hasGoalCalories),
+    };
+  }
+
+  NutritionalPlanTableData copyWith({
+    String? id,
+    String? description,
+    DateTime? creationDate,
+    DateTime? startDate,
+    Value<DateTime?> endDate = const Value.absent(),
+    bool? onlyLogging,
+    Value<int?> goalEnergy = const Value.absent(),
+    Value<int?> goalProtein = const Value.absent(),
+    Value<int?> goalCarbohydrates = const Value.absent(),
+    Value<int?> goalFiber = const Value.absent(),
+    Value<int?> goalFat = const Value.absent(),
+    bool? hasGoalCalories,
+  }) => NutritionalPlanTableData(
+    id: id ?? this.id,
+    description: description ?? this.description,
+    creationDate: creationDate ?? this.creationDate,
+    startDate: startDate ?? this.startDate,
+    endDate: endDate.present ? endDate.value : this.endDate,
+    onlyLogging: onlyLogging ?? this.onlyLogging,
+    goalEnergy: goalEnergy.present ? goalEnergy.value : this.goalEnergy,
+    goalProtein: goalProtein.present ? goalProtein.value : this.goalProtein,
+    goalCarbohydrates: goalCarbohydrates.present
+        ? goalCarbohydrates.value
+        : this.goalCarbohydrates,
+    goalFiber: goalFiber.present ? goalFiber.value : this.goalFiber,
+    goalFat: goalFat.present ? goalFat.value : this.goalFat,
+    hasGoalCalories: hasGoalCalories ?? this.hasGoalCalories,
+  );
+  NutritionalPlanTableData copyWithCompanion(
+    NutritionalPlanTableCompanion data,
+  ) {
+    return NutritionalPlanTableData(
+      id: data.id.present ? data.id.value : this.id,
+      description: data.description.present
+          ? data.description.value
+          : this.description,
+      creationDate: data.creationDate.present
+          ? data.creationDate.value
+          : this.creationDate,
+      startDate: data.startDate.present ? data.startDate.value : this.startDate,
+      endDate: data.endDate.present ? data.endDate.value : this.endDate,
+      onlyLogging: data.onlyLogging.present
+          ? data.onlyLogging.value
+          : this.onlyLogging,
+      goalEnergy: data.goalEnergy.present
+          ? data.goalEnergy.value
+          : this.goalEnergy,
+      goalProtein: data.goalProtein.present
+          ? data.goalProtein.value
+          : this.goalProtein,
+      goalCarbohydrates: data.goalCarbohydrates.present
+          ? data.goalCarbohydrates.value
+          : this.goalCarbohydrates,
+      goalFiber: data.goalFiber.present ? data.goalFiber.value : this.goalFiber,
+      goalFat: data.goalFat.present ? data.goalFat.value : this.goalFat,
+      hasGoalCalories: data.hasGoalCalories.present
+          ? data.hasGoalCalories.value
+          : this.hasGoalCalories,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('NutritionalPlanTableData(')
+          ..write('id: $id, ')
+          ..write('description: $description, ')
+          ..write('creationDate: $creationDate, ')
+          ..write('startDate: $startDate, ')
+          ..write('endDate: $endDate, ')
+          ..write('onlyLogging: $onlyLogging, ')
+          ..write('goalEnergy: $goalEnergy, ')
+          ..write('goalProtein: $goalProtein, ')
+          ..write('goalCarbohydrates: $goalCarbohydrates, ')
+          ..write('goalFiber: $goalFiber, ')
+          ..write('goalFat: $goalFat, ')
+          ..write('hasGoalCalories: $hasGoalCalories')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    description,
+    creationDate,
+    startDate,
+    endDate,
+    onlyLogging,
+    goalEnergy,
+    goalProtein,
+    goalCarbohydrates,
+    goalFiber,
+    goalFat,
+    hasGoalCalories,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is NutritionalPlanTableData &&
+          other.id == this.id &&
+          other.description == this.description &&
+          other.creationDate == this.creationDate &&
+          other.startDate == this.startDate &&
+          other.endDate == this.endDate &&
+          other.onlyLogging == this.onlyLogging &&
+          other.goalEnergy == this.goalEnergy &&
+          other.goalProtein == this.goalProtein &&
+          other.goalCarbohydrates == this.goalCarbohydrates &&
+          other.goalFiber == this.goalFiber &&
+          other.goalFat == this.goalFat &&
+          other.hasGoalCalories == this.hasGoalCalories);
+}
+
+class NutritionalPlanTableCompanion
+    extends UpdateCompanion<NutritionalPlanTableData> {
   final Value<String> id;
   final Value<String> description;
   final Value<DateTime> creationDate;
@@ -344,7 +628,7 @@ class NutritionalPlanTableCompanion extends UpdateCompanion<NutritionalPlan> {
        startDate = Value(startDate),
        onlyLogging = Value(onlyLogging),
        hasGoalCalories = Value(hasGoalCalories);
-  static Insertable<NutritionalPlan> custom({
+  static Insertable<NutritionalPlanTableData> custom({
     Expression<String>? id,
     Expression<String>? description,
     Expression<DateTime>? creationDate,
@@ -475,7 +759,7 @@ class NutritionalPlanTableCompanion extends UpdateCompanion<NutritionalPlan> {
 }
 
 class $IngredientTableTable extends IngredientTable
-    with TableInfo<$IngredientTableTable, Ingredient> {
+    with TableInfo<$IngredientTableTable, IngredientTableData> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
@@ -731,7 +1015,7 @@ class $IngredientTableTable extends IngredientTable
   static const String $name = 'nutrition_ingredient';
   @override
   VerificationContext validateIntegrity(
-    Insertable<Ingredient> instance, {
+    Insertable<IngredientTableData> instance, {
     bool isInserting = false,
   }) {
     final context = VerificationContext();
@@ -890,9 +1174,9 @@ class $IngredientTableTable extends IngredientTable
   @override
   Set<GeneratedColumn> get $primaryKey => const {};
   @override
-  Ingredient map(Map<String, dynamic> data, {String? tablePrefix}) {
+  IngredientTableData map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return Ingredient(
+    return IngredientTableData(
       id: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}id'],
@@ -901,13 +1185,37 @@ class $IngredientTableTable extends IngredientTable
         DriftSqlType.string,
         data['${effectivePrefix}uuid'],
       )!,
+      languageId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}language_id'],
+      )!,
+      remoteId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}remote_id'],
+      ),
+      sourceName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}source_name'],
+      ),
+      sourceUrl: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}source_url'],
+      ),
+      licenseObjectURl: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}license_object_url'],
+      ),
+      code: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}code'],
+      ),
       name: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}name'],
       )!,
-      languageId: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}language_id'],
+      created: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created'],
       )!,
       energy: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
@@ -955,10 +1263,6 @@ class $IngredientTableTable extends IngredientTable
           data['${effectivePrefix}nutriscore'],
         ),
       ),
-      created: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}created'],
-      )!,
     );
   }
 
@@ -973,7 +1277,387 @@ class $IngredientTableTable extends IngredientTable
   $converternutriscoren = JsonTypeConverter2.asNullable($converternutriscore);
 }
 
-class IngredientTableCompanion extends UpdateCompanion<Ingredient> {
+class IngredientTableData extends DataClass
+    implements Insertable<IngredientTableData> {
+  final int id;
+  final String uuid;
+  final int languageId;
+  final String? remoteId;
+  final String? sourceName;
+  final String? sourceUrl;
+  final String? licenseObjectURl;
+  final String? code;
+  final String name;
+  final DateTime created;
+  final int energy;
+  final double carbohydrates;
+  final double? carbohydratesSugar;
+  final double protein;
+  final double fat;
+  final double? fatSaturated;
+  final double? fiber;
+  final double? sodium;
+  final bool? isVegan;
+  final bool? isVegetarian;
+  final NutriScore? nutriscore;
+  const IngredientTableData({
+    required this.id,
+    required this.uuid,
+    required this.languageId,
+    this.remoteId,
+    this.sourceName,
+    this.sourceUrl,
+    this.licenseObjectURl,
+    this.code,
+    required this.name,
+    required this.created,
+    required this.energy,
+    required this.carbohydrates,
+    this.carbohydratesSugar,
+    required this.protein,
+    required this.fat,
+    this.fatSaturated,
+    this.fiber,
+    this.sodium,
+    this.isVegan,
+    this.isVegetarian,
+    this.nutriscore,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['uuid'] = Variable<String>(uuid);
+    map['language_id'] = Variable<int>(languageId);
+    if (!nullToAbsent || remoteId != null) {
+      map['remote_id'] = Variable<String>(remoteId);
+    }
+    if (!nullToAbsent || sourceName != null) {
+      map['source_name'] = Variable<String>(sourceName);
+    }
+    if (!nullToAbsent || sourceUrl != null) {
+      map['source_url'] = Variable<String>(sourceUrl);
+    }
+    if (!nullToAbsent || licenseObjectURl != null) {
+      map['license_object_url'] = Variable<String>(licenseObjectURl);
+    }
+    if (!nullToAbsent || code != null) {
+      map['code'] = Variable<String>(code);
+    }
+    map['name'] = Variable<String>(name);
+    map['created'] = Variable<DateTime>(created);
+    map['energy'] = Variable<int>(energy);
+    map['carbohydrates'] = Variable<double>(carbohydrates);
+    if (!nullToAbsent || carbohydratesSugar != null) {
+      map['carbohydrates_sugar'] = Variable<double>(carbohydratesSugar);
+    }
+    map['protein'] = Variable<double>(protein);
+    map['fat'] = Variable<double>(fat);
+    if (!nullToAbsent || fatSaturated != null) {
+      map['fat_saturated'] = Variable<double>(fatSaturated);
+    }
+    if (!nullToAbsent || fiber != null) {
+      map['fiber'] = Variable<double>(fiber);
+    }
+    if (!nullToAbsent || sodium != null) {
+      map['sodium'] = Variable<double>(sodium);
+    }
+    if (!nullToAbsent || isVegan != null) {
+      map['is_vegan'] = Variable<bool>(isVegan);
+    }
+    if (!nullToAbsent || isVegetarian != null) {
+      map['is_vegetarian'] = Variable<bool>(isVegetarian);
+    }
+    if (!nullToAbsent || nutriscore != null) {
+      map['nutriscore'] = Variable<String>(
+        $IngredientTableTable.$converternutriscoren.toSql(nutriscore),
+      );
+    }
+    return map;
+  }
+
+  IngredientTableCompanion toCompanion(bool nullToAbsent) {
+    return IngredientTableCompanion(
+      id: Value(id),
+      uuid: Value(uuid),
+      languageId: Value(languageId),
+      remoteId: remoteId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(remoteId),
+      sourceName: sourceName == null && nullToAbsent
+          ? const Value.absent()
+          : Value(sourceName),
+      sourceUrl: sourceUrl == null && nullToAbsent
+          ? const Value.absent()
+          : Value(sourceUrl),
+      licenseObjectURl: licenseObjectURl == null && nullToAbsent
+          ? const Value.absent()
+          : Value(licenseObjectURl),
+      code: code == null && nullToAbsent ? const Value.absent() : Value(code),
+      name: Value(name),
+      created: Value(created),
+      energy: Value(energy),
+      carbohydrates: Value(carbohydrates),
+      carbohydratesSugar: carbohydratesSugar == null && nullToAbsent
+          ? const Value.absent()
+          : Value(carbohydratesSugar),
+      protein: Value(protein),
+      fat: Value(fat),
+      fatSaturated: fatSaturated == null && nullToAbsent
+          ? const Value.absent()
+          : Value(fatSaturated),
+      fiber: fiber == null && nullToAbsent
+          ? const Value.absent()
+          : Value(fiber),
+      sodium: sodium == null && nullToAbsent
+          ? const Value.absent()
+          : Value(sodium),
+      isVegan: isVegan == null && nullToAbsent
+          ? const Value.absent()
+          : Value(isVegan),
+      isVegetarian: isVegetarian == null && nullToAbsent
+          ? const Value.absent()
+          : Value(isVegetarian),
+      nutriscore: nutriscore == null && nullToAbsent
+          ? const Value.absent()
+          : Value(nutriscore),
+    );
+  }
+
+  factory IngredientTableData.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return IngredientTableData(
+      id: serializer.fromJson<int>(json['id']),
+      uuid: serializer.fromJson<String>(json['uuid']),
+      languageId: serializer.fromJson<int>(json['languageId']),
+      remoteId: serializer.fromJson<String?>(json['remoteId']),
+      sourceName: serializer.fromJson<String?>(json['sourceName']),
+      sourceUrl: serializer.fromJson<String?>(json['sourceUrl']),
+      licenseObjectURl: serializer.fromJson<String?>(json['licenseObjectURl']),
+      code: serializer.fromJson<String?>(json['code']),
+      name: serializer.fromJson<String>(json['name']),
+      created: serializer.fromJson<DateTime>(json['created']),
+      energy: serializer.fromJson<int>(json['energy']),
+      carbohydrates: serializer.fromJson<double>(json['carbohydrates']),
+      carbohydratesSugar: serializer.fromJson<double?>(
+        json['carbohydratesSugar'],
+      ),
+      protein: serializer.fromJson<double>(json['protein']),
+      fat: serializer.fromJson<double>(json['fat']),
+      fatSaturated: serializer.fromJson<double?>(json['fatSaturated']),
+      fiber: serializer.fromJson<double?>(json['fiber']),
+      sodium: serializer.fromJson<double?>(json['sodium']),
+      isVegan: serializer.fromJson<bool?>(json['isVegan']),
+      isVegetarian: serializer.fromJson<bool?>(json['isVegetarian']),
+      nutriscore: $IngredientTableTable.$converternutriscoren.fromJson(
+        serializer.fromJson<String?>(json['nutriscore']),
+      ),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'uuid': serializer.toJson<String>(uuid),
+      'languageId': serializer.toJson<int>(languageId),
+      'remoteId': serializer.toJson<String?>(remoteId),
+      'sourceName': serializer.toJson<String?>(sourceName),
+      'sourceUrl': serializer.toJson<String?>(sourceUrl),
+      'licenseObjectURl': serializer.toJson<String?>(licenseObjectURl),
+      'code': serializer.toJson<String?>(code),
+      'name': serializer.toJson<String>(name),
+      'created': serializer.toJson<DateTime>(created),
+      'energy': serializer.toJson<int>(energy),
+      'carbohydrates': serializer.toJson<double>(carbohydrates),
+      'carbohydratesSugar': serializer.toJson<double?>(carbohydratesSugar),
+      'protein': serializer.toJson<double>(protein),
+      'fat': serializer.toJson<double>(fat),
+      'fatSaturated': serializer.toJson<double?>(fatSaturated),
+      'fiber': serializer.toJson<double?>(fiber),
+      'sodium': serializer.toJson<double?>(sodium),
+      'isVegan': serializer.toJson<bool?>(isVegan),
+      'isVegetarian': serializer.toJson<bool?>(isVegetarian),
+      'nutriscore': serializer.toJson<String?>(
+        $IngredientTableTable.$converternutriscoren.toJson(nutriscore),
+      ),
+    };
+  }
+
+  IngredientTableData copyWith({
+    int? id,
+    String? uuid,
+    int? languageId,
+    Value<String?> remoteId = const Value.absent(),
+    Value<String?> sourceName = const Value.absent(),
+    Value<String?> sourceUrl = const Value.absent(),
+    Value<String?> licenseObjectURl = const Value.absent(),
+    Value<String?> code = const Value.absent(),
+    String? name,
+    DateTime? created,
+    int? energy,
+    double? carbohydrates,
+    Value<double?> carbohydratesSugar = const Value.absent(),
+    double? protein,
+    double? fat,
+    Value<double?> fatSaturated = const Value.absent(),
+    Value<double?> fiber = const Value.absent(),
+    Value<double?> sodium = const Value.absent(),
+    Value<bool?> isVegan = const Value.absent(),
+    Value<bool?> isVegetarian = const Value.absent(),
+    Value<NutriScore?> nutriscore = const Value.absent(),
+  }) => IngredientTableData(
+    id: id ?? this.id,
+    uuid: uuid ?? this.uuid,
+    languageId: languageId ?? this.languageId,
+    remoteId: remoteId.present ? remoteId.value : this.remoteId,
+    sourceName: sourceName.present ? sourceName.value : this.sourceName,
+    sourceUrl: sourceUrl.present ? sourceUrl.value : this.sourceUrl,
+    licenseObjectURl: licenseObjectURl.present
+        ? licenseObjectURl.value
+        : this.licenseObjectURl,
+    code: code.present ? code.value : this.code,
+    name: name ?? this.name,
+    created: created ?? this.created,
+    energy: energy ?? this.energy,
+    carbohydrates: carbohydrates ?? this.carbohydrates,
+    carbohydratesSugar: carbohydratesSugar.present
+        ? carbohydratesSugar.value
+        : this.carbohydratesSugar,
+    protein: protein ?? this.protein,
+    fat: fat ?? this.fat,
+    fatSaturated: fatSaturated.present ? fatSaturated.value : this.fatSaturated,
+    fiber: fiber.present ? fiber.value : this.fiber,
+    sodium: sodium.present ? sodium.value : this.sodium,
+    isVegan: isVegan.present ? isVegan.value : this.isVegan,
+    isVegetarian: isVegetarian.present ? isVegetarian.value : this.isVegetarian,
+    nutriscore: nutriscore.present ? nutriscore.value : this.nutriscore,
+  );
+  IngredientTableData copyWithCompanion(IngredientTableCompanion data) {
+    return IngredientTableData(
+      id: data.id.present ? data.id.value : this.id,
+      uuid: data.uuid.present ? data.uuid.value : this.uuid,
+      languageId: data.languageId.present
+          ? data.languageId.value
+          : this.languageId,
+      remoteId: data.remoteId.present ? data.remoteId.value : this.remoteId,
+      sourceName: data.sourceName.present
+          ? data.sourceName.value
+          : this.sourceName,
+      sourceUrl: data.sourceUrl.present ? data.sourceUrl.value : this.sourceUrl,
+      licenseObjectURl: data.licenseObjectURl.present
+          ? data.licenseObjectURl.value
+          : this.licenseObjectURl,
+      code: data.code.present ? data.code.value : this.code,
+      name: data.name.present ? data.name.value : this.name,
+      created: data.created.present ? data.created.value : this.created,
+      energy: data.energy.present ? data.energy.value : this.energy,
+      carbohydrates: data.carbohydrates.present
+          ? data.carbohydrates.value
+          : this.carbohydrates,
+      carbohydratesSugar: data.carbohydratesSugar.present
+          ? data.carbohydratesSugar.value
+          : this.carbohydratesSugar,
+      protein: data.protein.present ? data.protein.value : this.protein,
+      fat: data.fat.present ? data.fat.value : this.fat,
+      fatSaturated: data.fatSaturated.present
+          ? data.fatSaturated.value
+          : this.fatSaturated,
+      fiber: data.fiber.present ? data.fiber.value : this.fiber,
+      sodium: data.sodium.present ? data.sodium.value : this.sodium,
+      isVegan: data.isVegan.present ? data.isVegan.value : this.isVegan,
+      isVegetarian: data.isVegetarian.present
+          ? data.isVegetarian.value
+          : this.isVegetarian,
+      nutriscore: data.nutriscore.present
+          ? data.nutriscore.value
+          : this.nutriscore,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('IngredientTableData(')
+          ..write('id: $id, ')
+          ..write('uuid: $uuid, ')
+          ..write('languageId: $languageId, ')
+          ..write('remoteId: $remoteId, ')
+          ..write('sourceName: $sourceName, ')
+          ..write('sourceUrl: $sourceUrl, ')
+          ..write('licenseObjectURl: $licenseObjectURl, ')
+          ..write('code: $code, ')
+          ..write('name: $name, ')
+          ..write('created: $created, ')
+          ..write('energy: $energy, ')
+          ..write('carbohydrates: $carbohydrates, ')
+          ..write('carbohydratesSugar: $carbohydratesSugar, ')
+          ..write('protein: $protein, ')
+          ..write('fat: $fat, ')
+          ..write('fatSaturated: $fatSaturated, ')
+          ..write('fiber: $fiber, ')
+          ..write('sodium: $sodium, ')
+          ..write('isVegan: $isVegan, ')
+          ..write('isVegetarian: $isVegetarian, ')
+          ..write('nutriscore: $nutriscore')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hashAll([
+    id,
+    uuid,
+    languageId,
+    remoteId,
+    sourceName,
+    sourceUrl,
+    licenseObjectURl,
+    code,
+    name,
+    created,
+    energy,
+    carbohydrates,
+    carbohydratesSugar,
+    protein,
+    fat,
+    fatSaturated,
+    fiber,
+    sodium,
+    isVegan,
+    isVegetarian,
+    nutriscore,
+  ]);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is IngredientTableData &&
+          other.id == this.id &&
+          other.uuid == this.uuid &&
+          other.languageId == this.languageId &&
+          other.remoteId == this.remoteId &&
+          other.sourceName == this.sourceName &&
+          other.sourceUrl == this.sourceUrl &&
+          other.licenseObjectURl == this.licenseObjectURl &&
+          other.code == this.code &&
+          other.name == this.name &&
+          other.created == this.created &&
+          other.energy == this.energy &&
+          other.carbohydrates == this.carbohydrates &&
+          other.carbohydratesSugar == this.carbohydratesSugar &&
+          other.protein == this.protein &&
+          other.fat == this.fat &&
+          other.fatSaturated == this.fatSaturated &&
+          other.fiber == this.fiber &&
+          other.sodium == this.sodium &&
+          other.isVegan == this.isVegan &&
+          other.isVegetarian == this.isVegetarian &&
+          other.nutriscore == this.nutriscore);
+}
+
+class IngredientTableCompanion extends UpdateCompanion<IngredientTableData> {
   final Value<int> id;
   final Value<String> uuid;
   final Value<int> languageId;
@@ -1051,7 +1735,7 @@ class IngredientTableCompanion extends UpdateCompanion<Ingredient> {
        carbohydrates = Value(carbohydrates),
        protein = Value(protein),
        fat = Value(fat);
-  static Insertable<Ingredient> custom({
+  static Insertable<IngredientTableData> custom({
     Expression<int>? id,
     Expression<String>? uuid,
     Expression<int>? languageId,
@@ -1256,7 +1940,7 @@ class IngredientTableCompanion extends UpdateCompanion<Ingredient> {
 }
 
 class $IngredientImageTableTable extends IngredientImageTable
-    with TableInfo<$IngredientImageTableTable, IngredientImage> {
+    with TableInfo<$IngredientImageTableTable, IngredientImageTableData> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
@@ -1438,7 +2122,7 @@ class $IngredientImageTableTable extends IngredientImageTable
   static const String $name = 'nutrition_image';
   @override
   VerificationContext validateIntegrity(
-    Insertable<IngredientImage> instance, {
+    Insertable<IngredientImageTableData> instance, {
     bool isInserting = false,
   }) {
     final context = VerificationContext();
@@ -1576,9 +2260,12 @@ class $IngredientImageTableTable extends IngredientImageTable
   @override
   Set<GeneratedColumn> get $primaryKey => const {};
   @override
-  IngredientImage map(Map<String, dynamic> data, {String? tablePrefix}) {
+  IngredientImageTableData map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return IngredientImage(
+    return IngredientImageTableData(
       id: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}id'],
@@ -1611,6 +2298,34 @@ class $IngredientImageTableTable extends IngredientImageTable
         DriftSqlType.dateTime,
         data['${effectivePrefix}created'],
       )!,
+      lastUpdate: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}last_update'],
+      )!,
+      licenseId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}license_id'],
+      )!,
+      author: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}license_author'],
+      ),
+      authorUrl: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}license_author_url'],
+      )!,
+      title: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}license_title'],
+      )!,
+      objectUrl: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}license_object_url'],
+      )!,
+      derivativeSourceUrl: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}license_derivative_source_url'],
+      )!,
     );
   }
 
@@ -1620,7 +2335,258 @@ class $IngredientImageTableTable extends IngredientImageTable
   }
 }
 
-class IngredientImageTableCompanion extends UpdateCompanion<IngredientImage> {
+class IngredientImageTableData extends DataClass
+    implements Insertable<IngredientImageTableData> {
+  final int id;
+  final String uuid;
+  final int ingredientId;
+  final String image;
+  final int size;
+  final int width;
+  final int height;
+  final DateTime created;
+  final DateTime lastUpdate;
+  final int licenseId;
+  final String? author;
+  final String authorUrl;
+  final String title;
+  final String objectUrl;
+  final String derivativeSourceUrl;
+  const IngredientImageTableData({
+    required this.id,
+    required this.uuid,
+    required this.ingredientId,
+    required this.image,
+    required this.size,
+    required this.width,
+    required this.height,
+    required this.created,
+    required this.lastUpdate,
+    required this.licenseId,
+    this.author,
+    required this.authorUrl,
+    required this.title,
+    required this.objectUrl,
+    required this.derivativeSourceUrl,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['uuid'] = Variable<String>(uuid);
+    map['ingredient_id'] = Variable<int>(ingredientId);
+    map['image'] = Variable<String>(image);
+    map['size'] = Variable<int>(size);
+    map['width'] = Variable<int>(width);
+    map['height'] = Variable<int>(height);
+    map['created'] = Variable<DateTime>(created);
+    map['last_update'] = Variable<DateTime>(lastUpdate);
+    map['license_id'] = Variable<int>(licenseId);
+    if (!nullToAbsent || author != null) {
+      map['license_author'] = Variable<String>(author);
+    }
+    map['license_author_url'] = Variable<String>(authorUrl);
+    map['license_title'] = Variable<String>(title);
+    map['license_object_url'] = Variable<String>(objectUrl);
+    map['license_derivative_source_url'] = Variable<String>(
+      derivativeSourceUrl,
+    );
+    return map;
+  }
+
+  IngredientImageTableCompanion toCompanion(bool nullToAbsent) {
+    return IngredientImageTableCompanion(
+      id: Value(id),
+      uuid: Value(uuid),
+      ingredientId: Value(ingredientId),
+      image: Value(image),
+      size: Value(size),
+      width: Value(width),
+      height: Value(height),
+      created: Value(created),
+      lastUpdate: Value(lastUpdate),
+      licenseId: Value(licenseId),
+      author: author == null && nullToAbsent
+          ? const Value.absent()
+          : Value(author),
+      authorUrl: Value(authorUrl),
+      title: Value(title),
+      objectUrl: Value(objectUrl),
+      derivativeSourceUrl: Value(derivativeSourceUrl),
+    );
+  }
+
+  factory IngredientImageTableData.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return IngredientImageTableData(
+      id: serializer.fromJson<int>(json['id']),
+      uuid: serializer.fromJson<String>(json['uuid']),
+      ingredientId: serializer.fromJson<int>(json['ingredientId']),
+      image: serializer.fromJson<String>(json['image']),
+      size: serializer.fromJson<int>(json['size']),
+      width: serializer.fromJson<int>(json['width']),
+      height: serializer.fromJson<int>(json['height']),
+      created: serializer.fromJson<DateTime>(json['created']),
+      lastUpdate: serializer.fromJson<DateTime>(json['lastUpdate']),
+      licenseId: serializer.fromJson<int>(json['licenseId']),
+      author: serializer.fromJson<String?>(json['author']),
+      authorUrl: serializer.fromJson<String>(json['authorUrl']),
+      title: serializer.fromJson<String>(json['title']),
+      objectUrl: serializer.fromJson<String>(json['objectUrl']),
+      derivativeSourceUrl: serializer.fromJson<String>(
+        json['derivativeSourceUrl'],
+      ),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'uuid': serializer.toJson<String>(uuid),
+      'ingredientId': serializer.toJson<int>(ingredientId),
+      'image': serializer.toJson<String>(image),
+      'size': serializer.toJson<int>(size),
+      'width': serializer.toJson<int>(width),
+      'height': serializer.toJson<int>(height),
+      'created': serializer.toJson<DateTime>(created),
+      'lastUpdate': serializer.toJson<DateTime>(lastUpdate),
+      'licenseId': serializer.toJson<int>(licenseId),
+      'author': serializer.toJson<String?>(author),
+      'authorUrl': serializer.toJson<String>(authorUrl),
+      'title': serializer.toJson<String>(title),
+      'objectUrl': serializer.toJson<String>(objectUrl),
+      'derivativeSourceUrl': serializer.toJson<String>(derivativeSourceUrl),
+    };
+  }
+
+  IngredientImageTableData copyWith({
+    int? id,
+    String? uuid,
+    int? ingredientId,
+    String? image,
+    int? size,
+    int? width,
+    int? height,
+    DateTime? created,
+    DateTime? lastUpdate,
+    int? licenseId,
+    Value<String?> author = const Value.absent(),
+    String? authorUrl,
+    String? title,
+    String? objectUrl,
+    String? derivativeSourceUrl,
+  }) => IngredientImageTableData(
+    id: id ?? this.id,
+    uuid: uuid ?? this.uuid,
+    ingredientId: ingredientId ?? this.ingredientId,
+    image: image ?? this.image,
+    size: size ?? this.size,
+    width: width ?? this.width,
+    height: height ?? this.height,
+    created: created ?? this.created,
+    lastUpdate: lastUpdate ?? this.lastUpdate,
+    licenseId: licenseId ?? this.licenseId,
+    author: author.present ? author.value : this.author,
+    authorUrl: authorUrl ?? this.authorUrl,
+    title: title ?? this.title,
+    objectUrl: objectUrl ?? this.objectUrl,
+    derivativeSourceUrl: derivativeSourceUrl ?? this.derivativeSourceUrl,
+  );
+  IngredientImageTableData copyWithCompanion(
+    IngredientImageTableCompanion data,
+  ) {
+    return IngredientImageTableData(
+      id: data.id.present ? data.id.value : this.id,
+      uuid: data.uuid.present ? data.uuid.value : this.uuid,
+      ingredientId: data.ingredientId.present
+          ? data.ingredientId.value
+          : this.ingredientId,
+      image: data.image.present ? data.image.value : this.image,
+      size: data.size.present ? data.size.value : this.size,
+      width: data.width.present ? data.width.value : this.width,
+      height: data.height.present ? data.height.value : this.height,
+      created: data.created.present ? data.created.value : this.created,
+      lastUpdate: data.lastUpdate.present
+          ? data.lastUpdate.value
+          : this.lastUpdate,
+      licenseId: data.licenseId.present ? data.licenseId.value : this.licenseId,
+      author: data.author.present ? data.author.value : this.author,
+      authorUrl: data.authorUrl.present ? data.authorUrl.value : this.authorUrl,
+      title: data.title.present ? data.title.value : this.title,
+      objectUrl: data.objectUrl.present ? data.objectUrl.value : this.objectUrl,
+      derivativeSourceUrl: data.derivativeSourceUrl.present
+          ? data.derivativeSourceUrl.value
+          : this.derivativeSourceUrl,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('IngredientImageTableData(')
+          ..write('id: $id, ')
+          ..write('uuid: $uuid, ')
+          ..write('ingredientId: $ingredientId, ')
+          ..write('image: $image, ')
+          ..write('size: $size, ')
+          ..write('width: $width, ')
+          ..write('height: $height, ')
+          ..write('created: $created, ')
+          ..write('lastUpdate: $lastUpdate, ')
+          ..write('licenseId: $licenseId, ')
+          ..write('author: $author, ')
+          ..write('authorUrl: $authorUrl, ')
+          ..write('title: $title, ')
+          ..write('objectUrl: $objectUrl, ')
+          ..write('derivativeSourceUrl: $derivativeSourceUrl')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    uuid,
+    ingredientId,
+    image,
+    size,
+    width,
+    height,
+    created,
+    lastUpdate,
+    licenseId,
+    author,
+    authorUrl,
+    title,
+    objectUrl,
+    derivativeSourceUrl,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is IngredientImageTableData &&
+          other.id == this.id &&
+          other.uuid == this.uuid &&
+          other.ingredientId == this.ingredientId &&
+          other.image == this.image &&
+          other.size == this.size &&
+          other.width == this.width &&
+          other.height == this.height &&
+          other.created == this.created &&
+          other.lastUpdate == this.lastUpdate &&
+          other.licenseId == this.licenseId &&
+          other.author == this.author &&
+          other.authorUrl == this.authorUrl &&
+          other.title == this.title &&
+          other.objectUrl == this.objectUrl &&
+          other.derivativeSourceUrl == this.derivativeSourceUrl);
+}
+
+class IngredientImageTableCompanion
+    extends UpdateCompanion<IngredientImageTableData> {
   final Value<int> id;
   final Value<String> uuid;
   final Value<int> ingredientId;
@@ -1686,7 +2652,7 @@ class IngredientImageTableCompanion extends UpdateCompanion<IngredientImage> {
        title = Value(title),
        objectUrl = Value(objectUrl),
        derivativeSourceUrl = Value(derivativeSourceUrl);
-  static Insertable<IngredientImage> custom({
+  static Insertable<IngredientImageTableData> custom({
     Expression<int>? id,
     Expression<String>? uuid,
     Expression<int>? ingredientId,
@@ -1844,7 +2810,11 @@ class IngredientImageTableCompanion extends UpdateCompanion<IngredientImage> {
 }
 
 class $IngredientWeightUnitTableTable extends IngredientWeightUnitTable
-    with TableInfo<$IngredientWeightUnitTableTable, IngredientWeightUnit> {
+    with
+        TableInfo<
+          $IngredientWeightUnitTableTable,
+          IngredientWeightUnitTableData
+        > {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
@@ -1908,7 +2878,7 @@ class $IngredientWeightUnitTableTable extends IngredientWeightUnitTable
   static const String $name = 'nutrition_ingredientweightunit';
   @override
   VerificationContext validateIntegrity(
-    Insertable<IngredientWeightUnit> instance, {
+    Insertable<IngredientWeightUnitTableData> instance, {
     bool isInserting = false,
   }) {
     final context = VerificationContext();
@@ -1957,12 +2927,19 @@ class $IngredientWeightUnitTableTable extends IngredientWeightUnitTable
   @override
   Set<GeneratedColumn> get $primaryKey => const {};
   @override
-  IngredientWeightUnit map(Map<String, dynamic> data, {String? tablePrefix}) {
+  IngredientWeightUnitTableData map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return IngredientWeightUnit(
+    return IngredientWeightUnitTableData(
       id: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}id'],
+      )!,
+      uuid: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}uuid'],
       )!,
       ingredientId: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
@@ -1985,8 +2962,122 @@ class $IngredientWeightUnitTableTable extends IngredientWeightUnitTable
   }
 }
 
+class IngredientWeightUnitTableData extends DataClass
+    implements Insertable<IngredientWeightUnitTableData> {
+  final int id;
+  final String uuid;
+  final int ingredientId;
+  final String name;
+  final int? gram;
+  const IngredientWeightUnitTableData({
+    required this.id,
+    required this.uuid,
+    required this.ingredientId,
+    required this.name,
+    this.gram,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['uuid'] = Variable<String>(uuid);
+    map['ingredient_id'] = Variable<int>(ingredientId);
+    map['name'] = Variable<String>(name);
+    if (!nullToAbsent || gram != null) {
+      map['gram'] = Variable<int>(gram);
+    }
+    return map;
+  }
+
+  IngredientWeightUnitTableCompanion toCompanion(bool nullToAbsent) {
+    return IngredientWeightUnitTableCompanion(
+      id: Value(id),
+      uuid: Value(uuid),
+      ingredientId: Value(ingredientId),
+      name: Value(name),
+      gram: gram == null && nullToAbsent ? const Value.absent() : Value(gram),
+    );
+  }
+
+  factory IngredientWeightUnitTableData.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return IngredientWeightUnitTableData(
+      id: serializer.fromJson<int>(json['id']),
+      uuid: serializer.fromJson<String>(json['uuid']),
+      ingredientId: serializer.fromJson<int>(json['ingredientId']),
+      name: serializer.fromJson<String>(json['name']),
+      gram: serializer.fromJson<int?>(json['gram']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'uuid': serializer.toJson<String>(uuid),
+      'ingredientId': serializer.toJson<int>(ingredientId),
+      'name': serializer.toJson<String>(name),
+      'gram': serializer.toJson<int?>(gram),
+    };
+  }
+
+  IngredientWeightUnitTableData copyWith({
+    int? id,
+    String? uuid,
+    int? ingredientId,
+    String? name,
+    Value<int?> gram = const Value.absent(),
+  }) => IngredientWeightUnitTableData(
+    id: id ?? this.id,
+    uuid: uuid ?? this.uuid,
+    ingredientId: ingredientId ?? this.ingredientId,
+    name: name ?? this.name,
+    gram: gram.present ? gram.value : this.gram,
+  );
+  IngredientWeightUnitTableData copyWithCompanion(
+    IngredientWeightUnitTableCompanion data,
+  ) {
+    return IngredientWeightUnitTableData(
+      id: data.id.present ? data.id.value : this.id,
+      uuid: data.uuid.present ? data.uuid.value : this.uuid,
+      ingredientId: data.ingredientId.present
+          ? data.ingredientId.value
+          : this.ingredientId,
+      name: data.name.present ? data.name.value : this.name,
+      gram: data.gram.present ? data.gram.value : this.gram,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('IngredientWeightUnitTableData(')
+          ..write('id: $id, ')
+          ..write('uuid: $uuid, ')
+          ..write('ingredientId: $ingredientId, ')
+          ..write('name: $name, ')
+          ..write('gram: $gram')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, uuid, ingredientId, name, gram);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is IngredientWeightUnitTableData &&
+          other.id == this.id &&
+          other.uuid == this.uuid &&
+          other.ingredientId == this.ingredientId &&
+          other.name == this.name &&
+          other.gram == this.gram);
+}
+
 class IngredientWeightUnitTableCompanion
-    extends UpdateCompanion<IngredientWeightUnit> {
+    extends UpdateCompanion<IngredientWeightUnitTableData> {
   final Value<int> id;
   final Value<String> uuid;
   final Value<int> ingredientId;
@@ -2012,7 +3103,7 @@ class IngredientWeightUnitTableCompanion
        uuid = Value(uuid),
        ingredientId = Value(ingredientId),
        name = Value(name);
-  static Insertable<IngredientWeightUnit> custom({
+  static Insertable<IngredientWeightUnitTableData> custom({
     Expression<int>? id,
     Expression<String>? uuid,
     Expression<int>? ingredientId,
@@ -2187,7 +3278,7 @@ class $MealTableTable extends MealTable with TableInfo<$MealTableTable, Meal> {
   @override
   Meal map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return Meal.fromDrift(
+    return Meal(
       id: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}id'],
@@ -2196,9 +3287,9 @@ class $MealTableTable extends MealTable with TableInfo<$MealTableTable, Meal> {
         DriftSqlType.string,
         data['${effectivePrefix}plan_id'],
       )!,
-      name: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}name'],
+      order: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}order'],
       )!,
       time: $MealTableTable.$convertertimen.fromSql(
         attachedDatabase.typeMapping.read(
@@ -2206,6 +3297,10 @@ class $MealTableTable extends MealTable with TableInfo<$MealTableTable, Meal> {
           data['${effectivePrefix}time'],
         ),
       ),
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
     );
   }
 
@@ -2218,6 +3313,117 @@ class $MealTableTable extends MealTable with TableInfo<$MealTableTable, Meal> {
       const TimeOfDayConverter();
   static TypeConverter<TimeOfDay?, String?> $convertertimen =
       NullAwareTypeConverter.wrap($convertertime);
+}
+
+class Meal extends DataClass implements Insertable<Meal> {
+  final String id;
+  final String planId;
+  final int order;
+  final TimeOfDay? time;
+  final String name;
+  const Meal({
+    required this.id,
+    required this.planId,
+    required this.order,
+    this.time,
+    required this.name,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['plan_id'] = Variable<String>(planId);
+    map['order'] = Variable<int>(order);
+    if (!nullToAbsent || time != null) {
+      map['time'] = Variable<String>(
+        $MealTableTable.$convertertimen.toSql(time),
+      );
+    }
+    map['name'] = Variable<String>(name);
+    return map;
+  }
+
+  MealTableCompanion toCompanion(bool nullToAbsent) {
+    return MealTableCompanion(
+      id: Value(id),
+      planId: Value(planId),
+      order: Value(order),
+      time: time == null && nullToAbsent ? const Value.absent() : Value(time),
+      name: Value(name),
+    );
+  }
+
+  factory Meal.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return Meal(
+      id: serializer.fromJson<String>(json['id']),
+      planId: serializer.fromJson<String>(json['planId']),
+      order: serializer.fromJson<int>(json['order']),
+      time: serializer.fromJson<TimeOfDay?>(json['time']),
+      name: serializer.fromJson<String>(json['name']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'planId': serializer.toJson<String>(planId),
+      'order': serializer.toJson<int>(order),
+      'time': serializer.toJson<TimeOfDay?>(time),
+      'name': serializer.toJson<String>(name),
+    };
+  }
+
+  Meal copyWith({
+    String? id,
+    String? planId,
+    int? order,
+    Value<TimeOfDay?> time = const Value.absent(),
+    String? name,
+  }) => Meal(
+    id: id ?? this.id,
+    planId: planId ?? this.planId,
+    order: order ?? this.order,
+    time: time.present ? time.value : this.time,
+    name: name ?? this.name,
+  );
+  Meal copyWithCompanion(MealTableCompanion data) {
+    return Meal(
+      id: data.id.present ? data.id.value : this.id,
+      planId: data.planId.present ? data.planId.value : this.planId,
+      order: data.order.present ? data.order.value : this.order,
+      time: data.time.present ? data.time.value : this.time,
+      name: data.name.present ? data.name.value : this.name,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('Meal(')
+          ..write('id: $id, ')
+          ..write('planId: $planId, ')
+          ..write('order: $order, ')
+          ..write('time: $time, ')
+          ..write('name: $name')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, planId, order, time, name);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Meal &&
+          other.id == this.id &&
+          other.planId == this.planId &&
+          other.order == this.order &&
+          other.time == this.time &&
+          other.name == this.name);
 }
 
 class MealTableCompanion extends UpdateCompanion<Meal> {
@@ -2610,7 +3816,7 @@ class MealItemTableCompanion extends UpdateCompanion<MealItem> {
 }
 
 class $LogItemTableTable extends LogItemTable
-    with TableInfo<$LogItemTableTable, LogItem> {
+    with TableInfo<$LogItemTableTable, LogItemTableData> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
@@ -2720,7 +3926,7 @@ class $LogItemTableTable extends LogItemTable
   static const String $name = 'nutrition_logitem';
   @override
   VerificationContext validateIntegrity(
-    Insertable<LogItem> instance, {
+    Insertable<LogItemTableData> instance, {
     bool isInserting = false,
   }) {
     final context = VerificationContext();
@@ -2790,9 +3996,9 @@ class $LogItemTableTable extends LogItemTable
   @override
   Set<GeneratedColumn> get $primaryKey => const {};
   @override
-  LogItem map(Map<String, dynamic> data, {String? tablePrefix}) {
+  LogItemTableData map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return LogItem(
+    return LogItemTableData(
       id: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}id'],
@@ -2821,6 +4027,10 @@ class $LogItemTableTable extends LogItemTable
         DriftSqlType.double,
         data['${effectivePrefix}amount'],
       )!,
+      comment: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}comment'],
+      ),
     );
   }
 
@@ -2830,7 +4040,173 @@ class $LogItemTableTable extends LogItemTable
   }
 }
 
-class LogItemTableCompanion extends UpdateCompanion<LogItem> {
+class LogItemTableData extends DataClass
+    implements Insertable<LogItemTableData> {
+  final String id;
+  final String planId;
+  final String? mealId;
+  final int ingredientId;
+  final int? weightUnitId;
+  final DateTime datetime;
+  final double amount;
+  final String? comment;
+  const LogItemTableData({
+    required this.id,
+    required this.planId,
+    this.mealId,
+    required this.ingredientId,
+    this.weightUnitId,
+    required this.datetime,
+    required this.amount,
+    this.comment,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['plan_id'] = Variable<String>(planId);
+    if (!nullToAbsent || mealId != null) {
+      map['meal_id'] = Variable<String>(mealId);
+    }
+    map['ingredient_id'] = Variable<int>(ingredientId);
+    if (!nullToAbsent || weightUnitId != null) {
+      map['weight_unit_id'] = Variable<int>(weightUnitId);
+    }
+    map['datetime'] = Variable<DateTime>(datetime);
+    map['amount'] = Variable<double>(amount);
+    if (!nullToAbsent || comment != null) {
+      map['comment'] = Variable<String>(comment);
+    }
+    return map;
+  }
+
+  LogItemTableCompanion toCompanion(bool nullToAbsent) {
+    return LogItemTableCompanion(
+      id: Value(id),
+      planId: Value(planId),
+      mealId: mealId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(mealId),
+      ingredientId: Value(ingredientId),
+      weightUnitId: weightUnitId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(weightUnitId),
+      datetime: Value(datetime),
+      amount: Value(amount),
+      comment: comment == null && nullToAbsent
+          ? const Value.absent()
+          : Value(comment),
+    );
+  }
+
+  factory LogItemTableData.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return LogItemTableData(
+      id: serializer.fromJson<String>(json['id']),
+      planId: serializer.fromJson<String>(json['planId']),
+      mealId: serializer.fromJson<String?>(json['mealId']),
+      ingredientId: serializer.fromJson<int>(json['ingredientId']),
+      weightUnitId: serializer.fromJson<int?>(json['weightUnitId']),
+      datetime: serializer.fromJson<DateTime>(json['datetime']),
+      amount: serializer.fromJson<double>(json['amount']),
+      comment: serializer.fromJson<String?>(json['comment']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'planId': serializer.toJson<String>(planId),
+      'mealId': serializer.toJson<String?>(mealId),
+      'ingredientId': serializer.toJson<int>(ingredientId),
+      'weightUnitId': serializer.toJson<int?>(weightUnitId),
+      'datetime': serializer.toJson<DateTime>(datetime),
+      'amount': serializer.toJson<double>(amount),
+      'comment': serializer.toJson<String?>(comment),
+    };
+  }
+
+  LogItemTableData copyWith({
+    String? id,
+    String? planId,
+    Value<String?> mealId = const Value.absent(),
+    int? ingredientId,
+    Value<int?> weightUnitId = const Value.absent(),
+    DateTime? datetime,
+    double? amount,
+    Value<String?> comment = const Value.absent(),
+  }) => LogItemTableData(
+    id: id ?? this.id,
+    planId: planId ?? this.planId,
+    mealId: mealId.present ? mealId.value : this.mealId,
+    ingredientId: ingredientId ?? this.ingredientId,
+    weightUnitId: weightUnitId.present ? weightUnitId.value : this.weightUnitId,
+    datetime: datetime ?? this.datetime,
+    amount: amount ?? this.amount,
+    comment: comment.present ? comment.value : this.comment,
+  );
+  LogItemTableData copyWithCompanion(LogItemTableCompanion data) {
+    return LogItemTableData(
+      id: data.id.present ? data.id.value : this.id,
+      planId: data.planId.present ? data.planId.value : this.planId,
+      mealId: data.mealId.present ? data.mealId.value : this.mealId,
+      ingredientId: data.ingredientId.present
+          ? data.ingredientId.value
+          : this.ingredientId,
+      weightUnitId: data.weightUnitId.present
+          ? data.weightUnitId.value
+          : this.weightUnitId,
+      datetime: data.datetime.present ? data.datetime.value : this.datetime,
+      amount: data.amount.present ? data.amount.value : this.amount,
+      comment: data.comment.present ? data.comment.value : this.comment,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('LogItemTableData(')
+          ..write('id: $id, ')
+          ..write('planId: $planId, ')
+          ..write('mealId: $mealId, ')
+          ..write('ingredientId: $ingredientId, ')
+          ..write('weightUnitId: $weightUnitId, ')
+          ..write('datetime: $datetime, ')
+          ..write('amount: $amount, ')
+          ..write('comment: $comment')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    planId,
+    mealId,
+    ingredientId,
+    weightUnitId,
+    datetime,
+    amount,
+    comment,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is LogItemTableData &&
+          other.id == this.id &&
+          other.planId == this.planId &&
+          other.mealId == this.mealId &&
+          other.ingredientId == this.ingredientId &&
+          other.weightUnitId == this.weightUnitId &&
+          other.datetime == this.datetime &&
+          other.amount == this.amount &&
+          other.comment == this.comment);
+}
+
+class LogItemTableCompanion extends UpdateCompanion<LogItemTableData> {
   final Value<String> id;
   final Value<String> planId;
   final Value<String?> mealId;
@@ -2865,7 +4241,7 @@ class LogItemTableCompanion extends UpdateCompanion<LogItem> {
        ingredientId = Value(ingredientId),
        datetime = Value(datetime),
        amount = Value(amount);
-  static Insertable<LogItem> custom({
+  static Insertable<LogItemTableData> custom({
     Expression<String>? id,
     Expression<String>? planId,
     Expression<String>? mealId,
@@ -3032,7 +4408,7 @@ final class $$NutritionalPlanTableTableReferences
         BaseReferences<
           _$DriftPowersyncDatabase,
           $NutritionalPlanTableTable,
-          NutritionalPlan
+          NutritionalPlanTableData
         > {
   $$NutritionalPlanTableTableReferences(
     super.$_db,
@@ -3062,7 +4438,7 @@ final class $$NutritionalPlanTableTableReferences
     );
   }
 
-  static MultiTypedResultKey<$LogItemTableTable, List<LogItem>>
+  static MultiTypedResultKey<$LogItemTableTable, List<LogItemTableData>>
   _logItemTableRefsTable(_$DriftPowersyncDatabase db) =>
       MultiTypedResultKey.fromTable(
         db.logItemTable,
@@ -3390,14 +4766,14 @@ class $$NutritionalPlanTableTableTableManager
         RootTableManager<
           _$DriftPowersyncDatabase,
           $NutritionalPlanTableTable,
-          NutritionalPlan,
+          NutritionalPlanTableData,
           $$NutritionalPlanTableTableFilterComposer,
           $$NutritionalPlanTableTableOrderingComposer,
           $$NutritionalPlanTableTableAnnotationComposer,
           $$NutritionalPlanTableTableCreateCompanionBuilder,
           $$NutritionalPlanTableTableUpdateCompanionBuilder,
-          (NutritionalPlan, $$NutritionalPlanTableTableReferences),
-          NutritionalPlan,
+          (NutritionalPlanTableData, $$NutritionalPlanTableTableReferences),
+          NutritionalPlanTableData,
           PrefetchHooks Function({bool mealTableRefs, bool logItemTableRefs})
         > {
   $$NutritionalPlanTableTableTableManager(
@@ -3500,7 +4876,7 @@ class $$NutritionalPlanTableTableTableManager
                     return [
                       if (mealTableRefs)
                         await $_getPrefetchedData<
-                          NutritionalPlan,
+                          NutritionalPlanTableData,
                           $NutritionalPlanTableTable,
                           Meal
                         >(
@@ -3521,9 +4897,9 @@ class $$NutritionalPlanTableTableTableManager
                         ),
                       if (logItemTableRefs)
                         await $_getPrefetchedData<
-                          NutritionalPlan,
+                          NutritionalPlanTableData,
                           $NutritionalPlanTableTable,
-                          LogItem
+                          LogItemTableData
                         >(
                           currentTable: table,
                           referencedTable: $$NutritionalPlanTableTableReferences
@@ -3552,14 +4928,14 @@ typedef $$NutritionalPlanTableTableProcessedTableManager =
     ProcessedTableManager<
       _$DriftPowersyncDatabase,
       $NutritionalPlanTableTable,
-      NutritionalPlan,
+      NutritionalPlanTableData,
       $$NutritionalPlanTableTableFilterComposer,
       $$NutritionalPlanTableTableOrderingComposer,
       $$NutritionalPlanTableTableAnnotationComposer,
       $$NutritionalPlanTableTableCreateCompanionBuilder,
       $$NutritionalPlanTableTableUpdateCompanionBuilder,
-      (NutritionalPlan, $$NutritionalPlanTableTableReferences),
-      NutritionalPlan,
+      (NutritionalPlanTableData, $$NutritionalPlanTableTableReferences),
+      NutritionalPlanTableData,
       PrefetchHooks Function({bool mealTableRefs, bool logItemTableRefs})
     >;
 typedef $$IngredientTableTableCreateCompanionBuilder =
@@ -3618,7 +4994,7 @@ final class $$IngredientTableTableReferences
         BaseReferences<
           _$DriftPowersyncDatabase,
           $IngredientTableTable,
-          Ingredient
+          IngredientTableData
         > {
   $$IngredientTableTableReferences(
     super.$_db,
@@ -3626,7 +5002,10 @@ final class $$IngredientTableTableReferences
     super.$_typedResult,
   );
 
-  static MultiTypedResultKey<$IngredientImageTableTable, List<IngredientImage>>
+  static MultiTypedResultKey<
+    $IngredientImageTableTable,
+    List<IngredientImageTableData>
+  >
   _ingredientImageTableRefsTable(_$DriftPowersyncDatabase db) =>
       MultiTypedResultKey.fromTable(
         db.ingredientImageTable,
@@ -3653,7 +5032,7 @@ final class $$IngredientTableTableReferences
 
   static MultiTypedResultKey<
     $IngredientWeightUnitTableTable,
-    List<IngredientWeightUnit>
+    List<IngredientWeightUnitTableData>
   >
   _ingredientWeightUnitTableRefsTable(_$DriftPowersyncDatabase db) =>
       MultiTypedResultKey.fromTable(
@@ -3701,7 +5080,7 @@ final class $$IngredientTableTableReferences
     );
   }
 
-  static MultiTypedResultKey<$LogItemTableTable, List<LogItem>>
+  static MultiTypedResultKey<$LogItemTableTable, List<LogItemTableData>>
   _logItemTableRefsTable(_$DriftPowersyncDatabase db) =>
       MultiTypedResultKey.fromTable(
         db.logItemTable,
@@ -4255,14 +5634,14 @@ class $$IngredientTableTableTableManager
         RootTableManager<
           _$DriftPowersyncDatabase,
           $IngredientTableTable,
-          Ingredient,
+          IngredientTableData,
           $$IngredientTableTableFilterComposer,
           $$IngredientTableTableOrderingComposer,
           $$IngredientTableTableAnnotationComposer,
           $$IngredientTableTableCreateCompanionBuilder,
           $$IngredientTableTableUpdateCompanionBuilder,
-          (Ingredient, $$IngredientTableTableReferences),
-          Ingredient,
+          (IngredientTableData, $$IngredientTableTableReferences),
+          IngredientTableData,
           PrefetchHooks Function({
             bool ingredientImageTableRefs,
             bool ingredientWeightUnitTableRefs,
@@ -4408,9 +5787,9 @@ class $$IngredientTableTableTableManager
                     return [
                       if (ingredientImageTableRefs)
                         await $_getPrefetchedData<
-                          Ingredient,
+                          IngredientTableData,
                           $IngredientTableTable,
-                          IngredientImage
+                          IngredientImageTableData
                         >(
                           currentTable: table,
                           referencedTable: $$IngredientTableTableReferences
@@ -4429,9 +5808,9 @@ class $$IngredientTableTableTableManager
                         ),
                       if (ingredientWeightUnitTableRefs)
                         await $_getPrefetchedData<
-                          Ingredient,
+                          IngredientTableData,
                           $IngredientTableTable,
-                          IngredientWeightUnit
+                          IngredientWeightUnitTableData
                         >(
                           currentTable: table,
                           referencedTable: $$IngredientTableTableReferences
@@ -4450,7 +5829,7 @@ class $$IngredientTableTableTableManager
                         ),
                       if (mealItemTableRefs)
                         await $_getPrefetchedData<
-                          Ingredient,
+                          IngredientTableData,
                           $IngredientTableTable,
                           MealItem
                         >(
@@ -4471,9 +5850,9 @@ class $$IngredientTableTableTableManager
                         ),
                       if (logItemTableRefs)
                         await $_getPrefetchedData<
-                          Ingredient,
+                          IngredientTableData,
                           $IngredientTableTable,
-                          LogItem
+                          LogItemTableData
                         >(
                           currentTable: table,
                           referencedTable: $$IngredientTableTableReferences
@@ -4502,14 +5881,14 @@ typedef $$IngredientTableTableProcessedTableManager =
     ProcessedTableManager<
       _$DriftPowersyncDatabase,
       $IngredientTableTable,
-      Ingredient,
+      IngredientTableData,
       $$IngredientTableTableFilterComposer,
       $$IngredientTableTableOrderingComposer,
       $$IngredientTableTableAnnotationComposer,
       $$IngredientTableTableCreateCompanionBuilder,
       $$IngredientTableTableUpdateCompanionBuilder,
-      (Ingredient, $$IngredientTableTableReferences),
-      Ingredient,
+      (IngredientTableData, $$IngredientTableTableReferences),
+      IngredientTableData,
       PrefetchHooks Function({
         bool ingredientImageTableRefs,
         bool ingredientWeightUnitTableRefs,
@@ -4561,7 +5940,7 @@ final class $$IngredientImageTableTableReferences
         BaseReferences<
           _$DriftPowersyncDatabase,
           $IngredientImageTableTable,
-          IngredientImage
+          IngredientImageTableData
         > {
   $$IngredientImageTableTableReferences(
     super.$_db,
@@ -4883,14 +6262,14 @@ class $$IngredientImageTableTableTableManager
         RootTableManager<
           _$DriftPowersyncDatabase,
           $IngredientImageTableTable,
-          IngredientImage,
+          IngredientImageTableData,
           $$IngredientImageTableTableFilterComposer,
           $$IngredientImageTableTableOrderingComposer,
           $$IngredientImageTableTableAnnotationComposer,
           $$IngredientImageTableTableCreateCompanionBuilder,
           $$IngredientImageTableTableUpdateCompanionBuilder,
-          (IngredientImage, $$IngredientImageTableTableReferences),
-          IngredientImage,
+          (IngredientImageTableData, $$IngredientImageTableTableReferences),
+          IngredientImageTableData,
           PrefetchHooks Function({bool ingredientId})
         > {
   $$IngredientImageTableTableTableManager(
@@ -5043,14 +6422,14 @@ typedef $$IngredientImageTableTableProcessedTableManager =
     ProcessedTableManager<
       _$DriftPowersyncDatabase,
       $IngredientImageTableTable,
-      IngredientImage,
+      IngredientImageTableData,
       $$IngredientImageTableTableFilterComposer,
       $$IngredientImageTableTableOrderingComposer,
       $$IngredientImageTableTableAnnotationComposer,
       $$IngredientImageTableTableCreateCompanionBuilder,
       $$IngredientImageTableTableUpdateCompanionBuilder,
-      (IngredientImage, $$IngredientImageTableTableReferences),
-      IngredientImage,
+      (IngredientImageTableData, $$IngredientImageTableTableReferences),
+      IngredientImageTableData,
       PrefetchHooks Function({bool ingredientId})
     >;
 typedef $$IngredientWeightUnitTableTableCreateCompanionBuilder =
@@ -5077,7 +6456,7 @@ final class $$IngredientWeightUnitTableTableReferences
         BaseReferences<
           _$DriftPowersyncDatabase,
           $IngredientWeightUnitTableTable,
-          IngredientWeightUnit
+          IngredientWeightUnitTableData
         > {
   $$IngredientWeightUnitTableTableReferences(
     super.$_db,
@@ -5268,14 +6647,17 @@ class $$IngredientWeightUnitTableTableTableManager
         RootTableManager<
           _$DriftPowersyncDatabase,
           $IngredientWeightUnitTableTable,
-          IngredientWeightUnit,
+          IngredientWeightUnitTableData,
           $$IngredientWeightUnitTableTableFilterComposer,
           $$IngredientWeightUnitTableTableOrderingComposer,
           $$IngredientWeightUnitTableTableAnnotationComposer,
           $$IngredientWeightUnitTableTableCreateCompanionBuilder,
           $$IngredientWeightUnitTableTableUpdateCompanionBuilder,
-          (IngredientWeightUnit, $$IngredientWeightUnitTableTableReferences),
-          IngredientWeightUnit,
+          (
+            IngredientWeightUnitTableData,
+            $$IngredientWeightUnitTableTableReferences,
+          ),
+          IngredientWeightUnitTableData,
           PrefetchHooks Function({bool ingredientId})
         > {
   $$IngredientWeightUnitTableTableTableManager(
@@ -5391,14 +6773,17 @@ typedef $$IngredientWeightUnitTableTableProcessedTableManager =
     ProcessedTableManager<
       _$DriftPowersyncDatabase,
       $IngredientWeightUnitTableTable,
-      IngredientWeightUnit,
+      IngredientWeightUnitTableData,
       $$IngredientWeightUnitTableTableFilterComposer,
       $$IngredientWeightUnitTableTableOrderingComposer,
       $$IngredientWeightUnitTableTableAnnotationComposer,
       $$IngredientWeightUnitTableTableCreateCompanionBuilder,
       $$IngredientWeightUnitTableTableUpdateCompanionBuilder,
-      (IngredientWeightUnit, $$IngredientWeightUnitTableTableReferences),
-      IngredientWeightUnit,
+      (
+        IngredientWeightUnitTableData,
+        $$IngredientWeightUnitTableTableReferences,
+      ),
+      IngredientWeightUnitTableData,
       PrefetchHooks Function({bool ingredientId})
     >;
 typedef $$MealTableTableCreateCompanionBuilder =
@@ -6282,7 +7667,11 @@ typedef $$LogItemTableTableUpdateCompanionBuilder =
 
 final class $$LogItemTableTableReferences
     extends
-        BaseReferences<_$DriftPowersyncDatabase, $LogItemTableTable, LogItem> {
+        BaseReferences<
+          _$DriftPowersyncDatabase,
+          $LogItemTableTable,
+          LogItemTableData
+        > {
   $$LogItemTableTableReferences(super.$_db, super.$_table, super.$_typedResult);
 
   static $NutritionalPlanTableTable _planIdTable(_$DriftPowersyncDatabase db) =>
@@ -6583,14 +7972,14 @@ class $$LogItemTableTableTableManager
         RootTableManager<
           _$DriftPowersyncDatabase,
           $LogItemTableTable,
-          LogItem,
+          LogItemTableData,
           $$LogItemTableTableFilterComposer,
           $$LogItemTableTableOrderingComposer,
           $$LogItemTableTableAnnotationComposer,
           $$LogItemTableTableCreateCompanionBuilder,
           $$LogItemTableTableUpdateCompanionBuilder,
-          (LogItem, $$LogItemTableTableReferences),
-          LogItem,
+          (LogItemTableData, $$LogItemTableTableReferences),
+          LogItemTableData,
           PrefetchHooks Function({bool planId, bool ingredientId})
         > {
   $$LogItemTableTableTableManager(
@@ -6720,14 +8109,14 @@ typedef $$LogItemTableTableProcessedTableManager =
     ProcessedTableManager<
       _$DriftPowersyncDatabase,
       $LogItemTableTable,
-      LogItem,
+      LogItemTableData,
       $$LogItemTableTableFilterComposer,
       $$LogItemTableTableOrderingComposer,
       $$LogItemTableTableAnnotationComposer,
       $$LogItemTableTableCreateCompanionBuilder,
       $$LogItemTableTableUpdateCompanionBuilder,
-      (LogItem, $$LogItemTableTableReferences),
-      LogItem,
+      (LogItemTableData, $$LogItemTableTableReferences),
+      LogItemTableData,
       PrefetchHooks Function({bool planId, bool ingredientId})
     >;
 

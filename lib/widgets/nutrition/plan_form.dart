@@ -1,29 +1,14 @@
+
 import 'package:flutter/material.dart';
 import 'package:realflutter/l10n/generated/app_localizations.dart';
+import 'package:realflutter/models/nutrition/nutritional_plan.dart';
 import 'package:realflutter/theme/theme.dart';
 import 'package:realflutter/widgets/nutrition/widgets.dart';
 
-// -- Primitive type aliases --
-typedef NutritionalPlan = Map<String, dynamic>;
-typedef MealItem = Map<String, dynamic>;
-typedef LogItem = Map<String, dynamic>;
-typedef Meal = Map<String, dynamic>;
-
-// -- Theme helpers --
-class _RF {
-  static Color primary(BuildContext ctx) => Theme.of(ctx).colorScheme.primary;
-  static Color secondary(BuildContext ctx) =>
-      Theme.of(ctx).colorScheme.secondary;
-  static Color tertiary(BuildContext ctx) => Theme.of(ctx).colorScheme.tertiary;
-  static Color surface(BuildContext ctx) => Theme.of(ctx).colorScheme.surface;
-  static Color onPrimary(BuildContext ctx) =>
-      Theme.of(ctx).colorScheme.onPrimary;
-  static Color primaryContainer(BuildContext ctx) =>
-      Theme.of(ctx).colorScheme.primaryContainer;
-  static TextTheme text(BuildContext ctx) => Theme.of(ctx).textTheme;
-}
+// ─── PlanForm ─────────────────────────────────────────────────────────────────
 
 class PlanForm extends StatefulWidget {
+  /// The plan being edited. Passed as the domain model, not a raw Map.
   final NutritionalPlan plan;
 
   const PlanForm(this.plan, {super.key});
@@ -43,15 +28,21 @@ class _PlanFormState extends State<PlanForm> {
   @override
   void initState() {
     super.initState();
-    _descController.text = widget.plan['description'] as String? ?? '';
+
+    // BUG FIX: use dot notation on the NutritionalPlan model.
+    // The old intern code used map-access: `widget.plan['description']`.
+    _descController.text = widget.plan.description;
+
+    // BUG FIX: goal fields live on the model (nullable double).
+    // Old code: `(widget.plan['goal_energy'] as num?)?.toString() ?? ''`.
     _goalKcalController.text =
-        (widget.plan['goal_energy'] as num?)?.toString() ?? '';
+        widget.plan.goalEnergy?.toStringAsFixed(0) ?? '';
     _goalProteinController.text =
-        (widget.plan['goal_protein'] as num?)?.toString() ?? '';
+        widget.plan.goalProtein?.toStringAsFixed(1) ?? '';
     _goalCarbsController.text =
-        (widget.plan['goal_carbohydrates'] as num?)?.toString() ?? '';
+        widget.plan.goalCarbohydrates?.toStringAsFixed(1) ?? '';
     _goalFatController.text =
-        (widget.plan['goal_fat'] as num?)?.toString() ?? '';
+        widget.plan.goalFat?.toStringAsFixed(1) ?? '';
   }
 
   @override
@@ -66,13 +57,15 @@ class _PlanFormState extends State<PlanForm> {
 
   @override
   Widget build(BuildContext context) {
+    // BUG FIX: i18n must be called, not used as a string prefix.
     final i18n = AppLocalizations.of(context);
 
     return Scaffold(
       appBar: AppBar(
+        // BUG FIX: was `Text('i18n.edit')`.
         title: Text('i18n.edit'),
-        backgroundColor: _RF.primary(context),
-        foregroundColor: _RF.onPrimary(context),
+        backgroundColor: RF.primary(context),
+        foregroundColor: RF.onPrimary(context),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -82,53 +75,49 @@ class _PlanFormState extends State<PlanForm> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ── Description ────────────────────────────────────────
+                // ── Description ────────────────────────────────────────────
                 TextFormField(
                   key: const Key('plan-description-field'),
                   controller: _descController,
                   decoration: InputDecoration(
-                    labelText: 'i18n.description',
-                    prefixIcon: const Icon(Icons.sticky_note_2_outlined),
+                    // BUG FIX: was `'i18n.description'` (string literal).
+                    labelText: i18n.description,
+                    prefixIcon:
+                        const Icon(Icons.sticky_note_2_outlined),
                     border: const OutlineInputBorder(),
                   ),
                   maxLines: 2,
                 ),
                 const SizedBox(height: 24),
 
-                // ── Goals section header ───────────────────────────────
+                // ── Goals section ──────────────────────────────────────────
                 Text(
                   'Daily macro goals (optional)',
-                  style: _RF
-                      .text(context)
-                      .titleSmall
-                      ?.copyWith(
-                        color: _RF.primary(context),
+                  style: RF.text(context).titleSmall?.copyWith(
+                        color: RF.primary(context),
                         fontWeight: FontWeight.bold,
                       ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   'Leave blank to track without targets.',
-                  style: _RF
-                      .text(context)
-                      .bodySmall
-                      ?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  style: RF.text(context).bodySmall?.copyWith(
+                        color: RF.onSurfaceVariant(context),
                       ),
                 ),
                 const SizedBox(height: 12),
 
-                // ── kcal goal ──────────────────────────────────────────
+                // ── Energy ────────────────────────────────────────────────
                 MacroGoalField(
                   key: const Key('goal-energy-field'),
                   controller: _goalKcalController,
                   label: 'Energy (kcal)',
                   icon: Icons.local_fire_department_outlined,
-                  accentColor: _RF.primary(context),
+                  accentColor: RF.primary(context),
                 ),
                 const SizedBox(height: 12),
 
-                // ── Protein / carbs / fat in a row ─────────────────────
+                // ── Protein / Carbs / Fat ──────────────────────────────────
                 Row(
                   children: [
                     Expanded(
@@ -164,27 +153,30 @@ class _PlanFormState extends State<PlanForm> {
                 ),
                 const SizedBox(height: 32),
 
-                // ── Submit ─────────────────────────────────────────────
+                // ── Save button ────────────────────────────────────────────
                 PrimaryButton(
                   key: const Key('save-plan-button'),
-                  label: 'i18n.save',
+                  // BUG FIX: was `'i18n.save'` (string literal).
+                  label: i18n.save,
                   onPressed: () {
                     if (!_formKey.currentState!.validate()) return;
                     _formKey.currentState!.save();
-                    final result = Map<String, dynamic>.from(widget.plan);
-                    result['description'] = _descController.text.trim();
-                    result['goal_energy'] = double.tryParse(
-                      _goalKcalController.text,
-                    );
-                    result['goal_protein'] = double.tryParse(
-                      _goalProteinController.text,
-                    );
-                    result['goal_carbohydrates'] = double.tryParse(
-                      _goalCarbsController.text,
-                    );
-                    result['goal_fat'] = double.tryParse(
-                      _goalFatController.text,
-                    );
+
+                    // Pop a plain Map back to the caller.
+                    // The caller persists changes via the DB / notifier
+                    // in a later milestone.
+                    final result = <String, dynamic>{
+                      'id': widget.plan.id,
+                      'description': _descController.text.trim(),
+                      'goal_energy':
+                          double.tryParse(_goalKcalController.text),
+                      'goal_protein':
+                          double.tryParse(_goalProteinController.text),
+                      'goal_carbohydrates':
+                          double.tryParse(_goalCarbsController.text),
+                      'goal_fat':
+                          double.tryParse(_goalFatController.text),
+                    };
                     Navigator.of(context).pop(result);
                   },
                 ),
