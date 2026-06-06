@@ -4,7 +4,6 @@ import 'package:realflutter/models/nutrition/ingredient.dart';
 import 'package:realflutter/models/nutrition/ingredient_image.dart'
     show IngredientImage;
 
-@UseRowClass(Ingredient)
 class IngredientTable extends Table {
   @override
   String get tableName => 'nutrition_ingredient';
@@ -71,7 +70,6 @@ const PowersyncIngredientTable = ps.Table(
   ],
 );
 
-@UseRowClass(IngredientImage)
 class IngredientImageTable extends Table {
   @override
   String get tableName => 'nutrition_image';
@@ -121,7 +119,6 @@ const PowersyncIngredientImageTable = ps.Table(
   ],
 );
 
-@UseRowClass(IngredientWeightUnit)
 class IngredientWeightUnitTable extends Table {
   @override
   String get tableName => 'nutrition_ingredientweightunit';

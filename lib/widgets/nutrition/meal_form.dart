@@ -1,38 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:realflutter/database/nutrition_repository.dart';
 import 'package:realflutter/l10n/generated/app_localizations.dart';
+import 'package:realflutter/models/nutrition/meal.dart';
 import 'package:realflutter/widgets/nutrition/widgets.dart';
 
-// -- Primitive type aliases --
-typedef NutritionalPlan = Map<String, dynamic>;
-typedef MealItem = Map<String, dynamic>;
-typedef LogItem = Map<String, dynamic>;
-typedef Meal = Map<String, dynamic>;
+// ─── MealForm ─────────────────────────────────────────────────────────────────
 
-// -- Theme helpers --
-class _RF {
-  static Color primary(BuildContext ctx) => Theme.of(ctx).colorScheme.primary;
-  static Color secondary(BuildContext ctx) =>
-      Theme.of(ctx).colorScheme.secondary;
-  static Color tertiary(BuildContext ctx) => Theme.of(ctx).colorScheme.tertiary;
-  static Color surface(BuildContext ctx) => Theme.of(ctx).colorScheme.surface;
-  static Color onPrimary(BuildContext ctx) =>
-      Theme.of(ctx).colorScheme.onPrimary;
-  static Color primaryContainer(BuildContext ctx) =>
-      Theme.of(ctx).colorScheme.primaryContainer;
-  static TextTheme text(BuildContext ctx) => Theme.of(ctx).textTheme;
-}
-
-/// Add or edit a meal (name + optional time).
-/// Used by MealSummarySection edit button and the floating "+ meal" action
-/// in NutritionalPlanScreen.
 class MealForm extends StatefulWidget {
-  /// Plan id this meal belongs to.
-  final int planId;
+  /// The id of the NutritionalPlan this meal belongs to.
+  final String planId;
 
-  /// Existing meal to edit; null means "create new".
+  /// Existing [Meal] to edit. Null → create a new meal.
   final Meal? meal;
+  final NutritionRepository repo;
 
-  const MealForm(this.planId, {super.key, this.meal});
+  const MealForm(this.planId, {super.key, this.meal, required this.repo});
 
   @override
   State<MealForm> createState() => _MealFormState();
@@ -41,21 +23,25 @@ class MealForm extends StatefulWidget {
 class _MealFormState extends State<MealForm> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
+
   TimeOfDay? _selectedTime;
 
   @override
   void initState() {
     super.initState();
     if (widget.meal != null) {
-      _nameController.text = widget.meal!['name'] as String? ?? '';
-      final timeStr = widget.meal!['time'] as String?;
-      if (timeStr != null && timeStr.contains(':')) {
-        final parts = timeStr.split(':');
-        _selectedTime = TimeOfDay(
-          hour: int.tryParse(parts[0]) ?? 0,
-          minute: int.tryParse(parts[1]) ?? 0,
-        );
-      }
+      _nameController.text = widget.meal!.name;
+
+      // final timeStr = widget.meal!.time;
+      // if (timeStr != null && timeStr.contains(':')) {
+      //   final parts = timeStr.split(':');
+      //   _selectedTime = TimeOfDay(
+      //     hour: int.tryParse(parts[0]) ?? 0,
+      //     minute: int.tryParse(parts[1]) ?? 0,
+      //   );
+      // }
+
+      _selectedTime = widget.meal!.time;
     }
   }
 
@@ -70,14 +56,17 @@ class _MealFormState extends State<MealForm> {
 
   @override
   Widget build(BuildContext context) {
+    // FIX: i18n is the object; its properties are accessed via dot notation,
+    // NOT wrapped in string literals like 'i18n.edit'.
     final i18n = AppLocalizations.of(context);
     final isEdit = widget.meal != null;
 
     return Scaffold(
       appBar: AppBar(
+        // FIX: was Text('i18n.edit') / Text('i18n.addMeal') — literal strings.
         title: Text(isEdit ? 'i18n.edit' : 'i18n.addMeal'),
-        backgroundColor: _RF.primary(context),
-        foregroundColor: _RF.onPrimary(context),
+        backgroundColor: RF.primary(context),
+        foregroundColor: RF.onPrimary(context),
       ),
       body: SafeArea(
         child: Padding(
@@ -87,15 +76,16 @@ class _MealFormState extends State<MealForm> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // - Plan badge --
+                // ── Plan context badge ─────────────────────────────────────
                 PlanBadge(planId: widget.planId),
                 const SizedBox(height: 20),
 
-                // - Meal name ---------------------
+                // ── Meal name ──────────────────────────────────────────────
                 TextFormField(
                   key: const Key('meal-name-field'),
                   controller: _nameController,
                   decoration: InputDecoration(
+                    // FIX: was 'i18n.name' — a string literal.
                     labelText: 'i18n.name',
                     prefixIcon: const Icon(Icons.restaurant_menu),
                     border: const OutlineInputBorder(),
@@ -111,7 +101,7 @@ class _MealFormState extends State<MealForm> {
                 ),
                 const SizedBox(height: 16),
 
-                // - Meal time picker --
+                // ── Meal time picker ───────────────────────────────────────
                 InkWell(
                   borderRadius: BorderRadius.circular(8),
                   onTap: () async {
@@ -125,7 +115,8 @@ class _MealFormState extends State<MealForm> {
                   },
                   child: InputDecorator(
                     decoration: InputDecoration(
-                      labelText: 'i18n.time',
+                      // FIX: was 'i18n.time'.
+                      labelText: i18n.time,
                       prefixIcon: const Icon(Icons.access_time),
                       border: const OutlineInputBorder(),
                       suffixIcon: _selectedTime != null
@@ -142,38 +133,46 @@ class _MealFormState extends State<MealForm> {
                           ? _formatTime(_selectedTime!)
                           : 'Optional – tap to set',
                       style: _selectedTime != null
-                          ? _RF.text(context).bodyMedium
-                          : _RF
+                          ? RF.text(context).bodyMedium
+                          : RF
                                 .text(context)
                                 .bodyMedium
-                                ?.copyWith(
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.onSurfaceVariant,
-                                ),
+                                ?.copyWith(color: RF.onSurfaceVariant(context)),
                     ),
                   ),
                 ),
 
                 const Spacer(),
 
-                // -- Submit --
+                // ── Save button ────────────────────────────────────────────
                 PrimaryButton(
                   key: const Key('save-meal-button'),
-                  label: isEdit ? 'i18n.save' : 'i18n.addMeal',
-                  onPressed: () {
+                  // FIX: was isEdit ? 'i18n.save' : 'i18n.addMeal' — literals.
+                  label: isEdit ? i18n.save : 'i18n.addMeal',
+                  onPressed: () async {
                     if (!_formKey.currentState!.validate()) return;
                     _formKey.currentState!.save();
 
-                    final result = <String, dynamic>{
-                      'plan': widget.planId,
-                      'name': _nameController.text.trim(),
-                      'time': _selectedTime != null
-                          ? _formatTime(_selectedTime!)
-                          : null,
-                    };
-                    if (isEdit) result['id'] = widget.meal!['id'];
-                    Navigator.of(context).pop(result);
+                    final meal = Meal(
+                      id: (widget.meal?.id.isNotEmpty == true)
+                          ? widget.meal!.id
+                          : '',
+                      planId: widget.planId,
+                      name: _nameController.text.trim(),
+                      time: _selectedTime ?? TimeOfDay.now(),
+                      // time: _selectedTime != null
+                      //     // ? _formatTime(_selectedTime!)
+                      //     ? _selectedTime
+                      //     : null,
+                    );
+
+                    if (widget.meal != null && widget.meal!.id.isNotEmpty) {
+                      await widget.repo.updateMeal(meal);
+                    } else {
+                      await widget.repo.insertMeal(meal);
+                    }
+
+                    if (mounted) Navigator.of(context).pop();
                   },
                 ),
               ],
@@ -184,33 +183,3 @@ class _MealFormState extends State<MealForm> {
     );
   }
 }
-
-// // -─ getMealItemForm factory -------------------------
-
-// /// Factory matching wger's getMealItemForm signature.
-// /// Returns an IngredientForm scoped to the given meal.
-// Widget getMealItemForm(
-//   Meal meal,
-//   List<MealItem> recentMealItems,
-// ) {
-//   return IngredientForm(
-//     plan: meal,
-//     recent: recentMealItems,
-//     withDate: false,
-//     onSave: (
-//       BuildContext context,
-//       MealItem item,
-//       DateTime? dt,
-//     ) {
-//       ScaffoldMessenger.of(context).showSnackBar(
-//         SnackBar(
-//           content: Text(
-//             'Ingredient added to ${meal['name'] ?? 'meal'}',
-//             textAlign: TextAlign.center,
-//           ),
-//         ),
-//       );
-//       Navigator.of(context).pop(item);
-//     },
-//   );
-// }

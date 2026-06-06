@@ -1,32 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:realflutter/database/nutrition_repository.dart';
 import 'package:realflutter/l10n/generated/app_localizations.dart';
+import 'package:realflutter/models/nutrition/nutritional_plan.dart';
 import 'package:realflutter/theme/theme.dart';
 import 'package:realflutter/widgets/nutrition/widgets.dart';
 
-// -- Primitive type aliases --
-typedef NutritionalPlan = Map<String, dynamic>;
-typedef MealItem = Map<String, dynamic>;
-typedef LogItem = Map<String, dynamic>;
-typedef Meal = Map<String, dynamic>;
-
-// -- Theme helpers --
-class _RF {
-  static Color primary(BuildContext ctx) => Theme.of(ctx).colorScheme.primary;
-  static Color secondary(BuildContext ctx) =>
-      Theme.of(ctx).colorScheme.secondary;
-  static Color tertiary(BuildContext ctx) => Theme.of(ctx).colorScheme.tertiary;
-  static Color surface(BuildContext ctx) => Theme.of(ctx).colorScheme.surface;
-  static Color onPrimary(BuildContext ctx) =>
-      Theme.of(ctx).colorScheme.onPrimary;
-  static Color primaryContainer(BuildContext ctx) =>
-      Theme.of(ctx).colorScheme.primaryContainer;
-  static TextTheme text(BuildContext ctx) => Theme.of(ctx).textTheme;
-}
+// ─── PlanForm ─────────────────────────────────────────────────────────────────
 
 class PlanForm extends StatefulWidget {
   final NutritionalPlan plan;
+  final NutritionRepository repo;
 
-  const PlanForm(this.plan, {super.key});
+  const PlanForm(this.plan, {super.key, required this.repo});
 
   @override
   State<PlanForm> createState() => _PlanFormState();
@@ -43,15 +28,13 @@ class _PlanFormState extends State<PlanForm> {
   @override
   void initState() {
     super.initState();
-    _descController.text = widget.plan['description'] as String? ?? '';
-    _goalKcalController.text =
-        (widget.plan['goal_energy'] as num?)?.toString() ?? '';
+    _descController.text = widget.plan.description;
+    _goalKcalController.text = widget.plan.goalEnergy?.toStringAsFixed(0) ?? '';
     _goalProteinController.text =
-        (widget.plan['goal_protein'] as num?)?.toString() ?? '';
+        widget.plan.goalProtein?.toStringAsFixed(1) ?? '';
     _goalCarbsController.text =
-        (widget.plan['goal_carbohydrates'] as num?)?.toString() ?? '';
-    _goalFatController.text =
-        (widget.plan['goal_fat'] as num?)?.toString() ?? '';
+        widget.plan.goalCarbohydrates?.toStringAsFixed(1) ?? '';
+    _goalFatController.text = widget.plan.goalFat?.toStringAsFixed(1) ?? '';
   }
 
   @override
@@ -70,9 +53,10 @@ class _PlanFormState extends State<PlanForm> {
 
     return Scaffold(
       appBar: AppBar(
+        // FIX: was Text('i18n.edit') — a literal string, not the getter call.
         title: Text('i18n.edit'),
-        backgroundColor: _RF.primary(context),
-        foregroundColor: _RF.onPrimary(context),
+        backgroundColor: RF.primary(context),
+        foregroundColor: RF.onPrimary(context),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -82,12 +66,12 @@ class _PlanFormState extends State<PlanForm> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ── Description ────────────────────────────────────────
+                // ── Description ────────────────────────────────────────────
                 TextFormField(
                   key: const Key('plan-description-field'),
                   controller: _descController,
                   decoration: InputDecoration(
-                    labelText: 'i18n.description',
+                    labelText: i18n.description,
                     prefixIcon: const Icon(Icons.sticky_note_2_outlined),
                     border: const OutlineInputBorder(),
                   ),
@@ -95,40 +79,38 @@ class _PlanFormState extends State<PlanForm> {
                 ),
                 const SizedBox(height: 24),
 
-                // ── Goals section header ───────────────────────────────
+                // ── Goals section ──────────────────────────────────────────
                 Text(
                   'Daily macro goals (optional)',
-                  style: _RF
+                  style: RF
                       .text(context)
                       .titleSmall
                       ?.copyWith(
-                        color: _RF.primary(context),
+                        color: RF.primary(context),
                         fontWeight: FontWeight.bold,
                       ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   'Leave blank to track without targets.',
-                  style: _RF
+                  style: RF
                       .text(context)
                       .bodySmall
-                      ?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
+                      ?.copyWith(color: RF.onSurfaceVariant(context)),
                 ),
                 const SizedBox(height: 12),
 
-                // ── kcal goal ──────────────────────────────────────────
+                // ── Energy ────────────────────────────────────────────────
                 MacroGoalField(
                   key: const Key('goal-energy-field'),
                   controller: _goalKcalController,
                   label: 'Energy (kcal)',
                   icon: Icons.local_fire_department_outlined,
-                  accentColor: _RF.primary(context),
+                  accentColor: RF.primary(context),
                 ),
                 const SizedBox(height: 12),
 
-                // ── Protein / carbs / fat in a row ─────────────────────
+                // ── Protein / Carbs / Fat ──────────────────────────────────
                 Row(
                   children: [
                     Expanded(
@@ -164,28 +146,26 @@ class _PlanFormState extends State<PlanForm> {
                 ),
                 const SizedBox(height: 32),
 
-                // ── Submit ─────────────────────────────────────────────
+                // ── Save button ────────────────────────────────────────────
                 PrimaryButton(
                   key: const Key('save-plan-button'),
-                  label: 'i18n.save',
-                  onPressed: () {
+                  label: i18n.save,
+                  onPressed: () async {
                     if (!_formKey.currentState!.validate()) return;
                     _formKey.currentState!.save();
-                    final result = Map<String, dynamic>.from(widget.plan);
-                    result['description'] = _descController.text.trim();
-                    result['goal_energy'] = double.tryParse(
-                      _goalKcalController.text,
+
+                    final updated = widget.plan.copyWith(
+                      description: _descController.text.trim(),
+                      goalEnergy: double.tryParse(_goalKcalController.text),
+                      goalProtein: double.tryParse(_goalProteinController.text),
+                      goalCarbohydrates: double.tryParse(
+                        _goalCarbsController.text,
+                      ),
+                      goalFat: double.tryParse(_goalFatController.text),
                     );
-                    result['goal_protein'] = double.tryParse(
-                      _goalProteinController.text,
-                    );
-                    result['goal_carbohydrates'] = double.tryParse(
-                      _goalCarbsController.text,
-                    );
-                    result['goal_fat'] = double.tryParse(
-                      _goalFatController.text,
-                    );
-                    Navigator.of(context).pop(result);
+
+                    await widget.repo.updatePlan(updated);
+                    if (mounted) Navigator.of(context).pop();
                   },
                 ),
               ],

@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'package:realflutter/database/powersync/database.dart';
 import 'package:realflutter/l10n/generated/app_localizations.dart';
@@ -16,7 +15,7 @@ const String _kUsername = 'user';
 const String _kPassword = 'flutteruser';
 
 void main() {
-  // ProviderScope MUST wrap runApp — this is the root of all Riverpod providers.
+  // ProviderScope is kept to satisfy root configurations without DB providers
   runApp(const ProviderScope(child: MyApp()));
 }
 
@@ -56,7 +55,6 @@ class _MyAppState extends State<MyApp> {
           final planId = results.first['id'];
           final fullResponse = await http.get(
             Uri.parse('$_kBackendBase/api/nutritionalplans/$planId/full/'),
-
             headers: {'Authorization': 'Basic $credentials'},
           );
           if (fullResponse.statusCode == 200) {
@@ -84,32 +82,31 @@ class _MyAppState extends State<MyApp> {
       theme: rfLightTheme,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      home: FutureBuilder<NutritionalPlan>(
-        future: _planFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Scaffold(
-              body: Center(child: CircularProgressIndicator()),
-            );
-          }
-          if (snapshot.hasError) {
-            return Scaffold(
-              body: Center(child: Text('Error: ${snapshot.error}')),
-            );
-          }
-          if (snapshot.hasData) {
-            // Consumer gives us a ref inside a StatelessWidget build method.
-            return Consumer(
-              builder: (context, ref, _) {
-                final db = ref.read(driftPowerSyncDatabase);
-                return getIngredientLogForm(snapshot.data!, db);
-              },
-            );
-          }
-          return const Scaffold(body: Center(child: Text('No data.')));
+
+      // home: getIngredientLogForm(
+      //   NutritionalPlan.fromJson(_mockPlanJson),
+      //   null, // Pass null to isolate the UI screens from database operations
+      // ),
+      home: Consumer(
+        builder: (context, ref, _) {
+          final db = ref.read(driftPowerSyncDatabase);
+          // return getIngredientLogForm(snapshot.data!, db);
+          return getIngredientLogForm(
+            NutritionalPlan.fromJson(_mockPlanJson),
+            db,
+          );
         },
       ),
     );
+  }
+}
+
+class MainApp extends StatelessWidget {
+  const MainApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return getIngredientLogForm(NutritionalPlan.fromJson(_mockPlanJson), null);
   }
 }
 

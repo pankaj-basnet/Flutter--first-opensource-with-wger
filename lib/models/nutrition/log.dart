@@ -33,4 +33,22 @@ class LogItem {
       amount: (mealItem?['amount'] as num?)?.toDouble() ?? 0.0,
     );
   }
+
+  LogItem copyWith({
+    String? id,
+    String? planId,
+    String? mealId,
+    int? ingredientId,
+    int? weightUnitId,
+    DateTime? datetime,
+    double? amount,
+  }) => LogItem(
+    id: id ?? this.id,
+    planId: planId ?? this.planId,
+    mealId: mealId ?? this.mealId,
+    ingredientId: ingredientId ?? this.ingredientId,
+    weightUnitId: weightUnitId ?? this.weightUnitId,
+    datetime: datetime ?? this.datetime,
+    amount: amount ?? this.amount,
+  );
 }

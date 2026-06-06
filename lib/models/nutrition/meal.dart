@@ -7,42 +7,71 @@ class Meal {
   final String id;
   final String planId;
   final String name;
+
+  /// Meal time stored as 'HH:mm' string, e.g. '08:30'.
   final TimeOfDay? time;
+  final int order;
   final List<MealItem> mealItems;
 
   const Meal({
     required this.id,
-    this.planId = '',
+    required this.planId,
     this.name = '',
     this.time,
+    this.order = 1,
     this.mealItems = const [],
   });
+
+  factory Meal.fromJson(Map<String, dynamic> json) {
+    return Meal(
+      id: json['id']?.toString() ?? '',
+      planId:
+          json['planId']?.toString() ??
+          json['plan_id']?.toString() ??
+          json['plan']?.toString() ??
+          '',
+      name: json['name'] as String? ?? '',
+      time: _parseTime(json['time'] as String?),
+      order: json['order'] as int? ?? 1,
+      mealItems: (json['items'] as List<dynamic>? ?? [])
+          .map((i) => MealItem.fromJson(i as Map<String, dynamic>))
+          .toList(),
+    );
+  }
 
   Meal.fromDrift({
     required this.id,
     required this.planId,
     required this.name,
     this.time,
+    this.order = 1,
     this.mealItems = const [],
   });
 
-  factory Meal.fromJson(Map<String, dynamic> json) {
-    TimeOfDay? tod;
-    final t = json['time'] as String?;
-    if (t != null) {
-      final parts = t.split(':');
-      if (parts.length >= 2) {
-        tod = TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1]));
-      }
-    }
+  Meal copyWith({
+    String? id,
+    String? planId,
+    String? name,
+    final TimeOfDay? time,
+    final int? order,
+    List<MealItem>? mealItems,
+  }) {
     return Meal(
-      id: json['id']?.toString() ?? '',
-      planId: json['plan_id']?.toString() ?? '',
-      name: json['name'] as String? ?? '',
-      time: tod,
-      mealItems: (json['mealItems'] as List<dynamic>? ?? [])
-          .map((i) => MealItem.fromJson(i as Map<String, dynamic>))
-          .toList(),
+      id: id ?? this.id,
+      planId: planId ?? this.planId,
+      name: name ?? this.name,
+      time: time ?? this.time,
+      order: order ?? this.order,
+      mealItems: mealItems ?? this.mealItems,
+    );
+  }
+
+  static TimeOfDay? _parseTime(String? s) {
+    if (s == null || !s.contains(':')) return null;
+    final parts = s.split(':');
+    return TimeOfDay(
+      hour: int.tryParse(parts[0]) ?? 0,
+      minute: int.tryParse(parts[1]) ?? 0,
     );
   }
 }

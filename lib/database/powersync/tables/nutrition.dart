@@ -8,7 +8,6 @@ import 'package:realflutter/models/nutrition/meal.dart';
 import 'package:realflutter/models/nutrition/meal_item.dart';
 import 'package:realflutter/models/nutrition/nutritional_plan.dart';
 
-@UseRowClass(NutritionalPlan)
 class NutritionalPlanTable extends Table {
   @override
   String get tableName => 'nutrition_nutritionplan';
@@ -47,7 +46,6 @@ const PowersyncNutritionalPlanTable = ps.Table('nutrition_nutritionplan', [
 /// The client identifies rows by uuid; the sync rules emit
 /// `SELECT uuid AS id` so locally we just see a TEXT primary key. The
 /// integer `LogItem.id` from the backend stays server-side.
-@UseRowClass(LogItem)
 class LogItemTable extends Table {
   @override
   String get tableName => 'nutrition_logitem';

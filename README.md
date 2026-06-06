@@ -131,3 +131,86 @@ This project is open-source and released under the [MIT License]().
 | :--- | :--- | :--- | :--- | :--- |
 | **1** |  <img src="assets/readme/screenshot1.png" width="250"/>  | [`6d0edb7`](https://github.com/pankaj-basnet/Flutter--first-opensource-with-wger/commit/6d0edb72da7b32468218c521fcec9ac8116ed0f8) <br>•  Setup flutter project and Integrate `http` package to fetch GitHub JSON payload.<br>• Initial UI successfully renders live-fetched nutritional plan data. | <img src="assets/readme/s3-ingredientFormScreen.png" width="250"/> |  [`6f45b96`](https://github.com/pankaj-basnet/Flutter--first-opensource-with-wger/commit/6f45b960cac6ee604520f0d79bdefc7ac87a5cbc) <br>•  Ingredient log form with data models<br>•  Drift/powersync setup for offline mode |
 | **2** | <img src="assets/readme/screenshot3.png" width="250"/> | `[Hash]`<br>• Next feature description<br>• Next feature description | <img src="assets/readme/screenshot4.png" width="250"/> | `[Hash]`<br>• Next feature description<br>• Next feature description |
+
+
+---
+
+
+##  PowerSync Offline Mode: How It Wires Together 🔌
+
+Understanding why this works offline is important for week 2 on the wger project.
+
+```
+ONLINE (PowerSync syncing):
+
+  Django REST API
+       │  JSON over HTTP
+       ▼
+  PowerSync Cloud
+       │  WebSocket sync protocol
+       ▼
+  PowerSync SQLite (local)   ← same file as Drift reads
+       │
+       ▼
+  DriftPowersyncDatabase
+  (drift_sqlite_async wraps the PowerSync SQLite connection)
+       │
+       ▼
+  NutritionRepository (SELECT/INSERT via Drift)
+       │  Stream<T>
+       ▼
+  StreamBuilder → UI updates automatically
+```
+
+```
+OFFLINE (no internet):
+
+  Django REST API   ✗  (unreachable)
+  PowerSync Cloud   ✗  (no sync)
+
+  PowerSync SQLite (local)   ← STILL AVAILABLE, has all cached data
+       │
+       ▼
+  DriftPowersyncDatabase  ← queries work normally against cached SQLite
+       │
+       ▼
+  NutritionRepository → INSERT writes to local SQLite queue
+       │  Stream<T>
+       ▼
+  StreamBuilder → UI updates from local writes immediately ✅
+
+  When connectivity returns → PowerSync syncs queued writes to server
+```
+
+| SN | Screenshot A | Screenshot B | Screenshot C | Screenshot D |
+| :--- | :--- | :--- | :--- | :--- |
+| **1** |  <img src="assets/readme/screenshot_5_20260606_204139.png" width="250"/>  |  <img src="assets/readme/screenshot_6_20260606_204315.png" width="250"/>  | <img src="assets/readme/screenshot_7_20260606_204341.png" width="250"/> |   <img src="assets/readme/screenshot_8_20260606_204247.png" width="250"/>  |
+<!-- | **1** |  <img src="assets/readme/screenshot_5_20260606_204139.png.png" width="250"/>  | [`6d0edb7`](https://github.com/pankaj-basnet/Flutter--first-opensource-with-wger/commit/6d0edb72da7b32468218c521fcec9ac8116ed0f8) <br>•  Setup flutter project and Integrate `http` package to fetch GitHub JSON payload.<br>• Initial UI successfully renders live-fetched nutritional plan data. | <img src="assets/readme/s3-ingredientFormScreen.png" width="250"/> |  [`6f45b96`](https://github.com/pankaj-basnet/Flutter--first-opensource-with-wger/commit/6f45b960cac6ee604520f0d79bdefc7ac87a5cbc) <br>•  Ingredient log form with data models<br>•  Drift/powersync setup for offline mode | -->
+
+
+
+## Full Architecture Map 🏗️
+
+```
+main.dart
+  └── ProviderScope (Riverpod — only here)
+        └── powerSyncInstanceProvider (FutureProvider)
+              └── DriftPowersyncDatabase (Drift over SQLite)
+                    └── NutritionRepository (wraps Drift DAOs)
+                          │
+                    ┌─────┴──────────────────────────────────┐
+                    │  watchPlan()  watchMeals()  insertLog() │
+                    └───────────────────┬────────────────────┘
+                                        │ Stream<T>
+                          ┌─────────────▼──────────────────────┐
+                          │  IngredientLogScreen (StreamBuilder)│
+                          │  IngredientDetail                   │
+                          │  MealSummarySection                 │
+                          │  MealForm   PlanForm                │
+                          └────────────────────────────────────┘
+
+PowerSync sync layer (background):
+  SQLite (local) ◄──────────────► wger Django REST API
+                  PowerSync sync
+                  (automatic when online)
+```
