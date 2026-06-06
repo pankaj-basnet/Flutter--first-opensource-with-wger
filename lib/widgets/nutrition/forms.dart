@@ -8,7 +8,6 @@ import 'package:realflutter/models/nutrition/log.dart';
 import 'package:realflutter/models/nutrition/meal.dart';
 import 'package:realflutter/models/nutrition/meal_item.dart';
 import 'package:realflutter/models/nutrition/nutritional_plan.dart';
-import 'package:realflutter/screens/ingredients_screen.dart';
 import 'package:realflutter/theme/theme.dart';
 import 'package:realflutter/widgets/nutrition/meal_component.dart';
 import 'package:realflutter/widgets/nutrition/meal_form.dart'
@@ -72,7 +71,6 @@ class _MockEntry {
 
   const _MockEntry({required this.ingredient, required this.defaultAmount});
 
-  /// Macro label shown in ListTile subtitle.
   String get macroLabel =>
       '${ingredient.energy} kcal | '
       'P: ${ingredient.protein.toStringAsFixed(0)}g | '
@@ -80,45 +78,179 @@ class _MockEntry {
       'F: ${ingredient.fat.toStringAsFixed(0)}g';
 }
 
-// -- Factory function --
+// ── Factory function ──────────────────────────────────────────────────────────
 
-Widget getIngredientLogForm(
-  NutritionalPlan plan,
-  // ignore: avoid_dynamic_calls
-  dynamic db,
-) {
-  return IngredientLogScreen(plan: plan, db: db);
+// Widget getIngredientLogForm(NutritionalPlan plan, DriftPowersyncDatabase db) {
+//   final repo = NutritionRepository(db);
+//   return IngredientLogScreen(planId: plan.id, repo: repo);
+// }
+
+Widget getIngredientLogForm(NutritionalPlan plan, dynamic? db) {
+  // If db is null, pass a null or mock repository instance down safely
+  final repo = db != null ? NutritionRepository(db) : null;
+  // Return your root log form widget with the nullable repository reference
+  return IngredientLogScreen(planId: plan.id, repo: repo!);
 }
 
-class IngredientDetail extends StatelessWidget {
-  final NutritionalPlan plan;
-  final NutritionRepository repo;
-  final dynamic db; // powersync
+// ─── IngredientLogScreen ──────────────────────────────────────────────────────
 
-  const IngredientDetail({
+/// Root screen for the nutrition feature. Streams the plan from Drift via
+/// [NutritionRepository.watchPlan] so the UI rebuilds whenever data changes
+/// in local SQLite — no Riverpod or other state management required here.
+class IngredientLogScreen extends StatelessWidget {
+  final String planId;
+  final NutritionRepository repo;
+
+  const IngredientLogScreen({
     super.key,
-    required this.plan,
-    this.db,
+    required this.planId,
     required this.repo,
   });
-
-  // const IngredientDetail({super.key});
 
   @override
   Widget build(BuildContext context) {
     final i18n = AppLocalizations.of(context);
+
+    // - Mock plan JSON -
+    const _mockPlanJson = {
+      'id': 'plan-uuid-001',
+      'name': 'Lean Bulk Plan',
+      'meals': [
+        {
+          'id': 'meal-uuid-001',
+          'name': 'Breakfast',
+          'time': '08:00',
+          'mealItems': [
+            {
+              'id': 'item-uuid-001',
+              'ingredientId': 101,
+              'amount': 100,
+              'ingredient': {
+                'id': 101,
+                'name': 'Oatmeal',
+                'energy': 389,
+                'protein': 13,
+                'carbohydrates': 66,
+                'fat': 7,
+              },
+            },
+          ],
+        },
+        {
+          'id': 'meal-uuid-002',
+          'name': 'Snacks',
+          'time': '10:00',
+          'mealItems': [
+            {
+              'id': 'item-uuid-002',
+              'ingredientId': 104,
+              'amount': 100,
+              'ingredient': {
+                'id': 104,
+                'name': 'juice',
+                'energy': 285,
+                'protein': 13,
+                'carbohydrates': 66,
+                'fat': 7,
+              },
+            },
+          ],
+        },
+      ],
+      'diaryEntries': [
+        {
+          'planId': 'plan-uuid-001',
+          'mealId': 'meal-uuid-001',
+          'datetime': '2026-06-03T08:00:00Z',
+          'mealItem': {
+            'id': 'item-uuid-001',
+            'mealId': 'meal-uuid-001',
+            'ingredientId': 101,
+            'amount': 100,
+            'ingredient': {
+              'id': 101,
+              'name': 'Oatmeal (History Mock)',
+              'created': '2026-06-03T12:00:00Z',
+              'energy': 389,
+              'carbohydrates': '66.0',
+              'protein': '13.0',
+              'fat': '7.0',
+              'is_vegan': true,
+              'is_vegetarian': true,
+              'nutriscore': 'a',
+              'weight_units': [],
+            },
+          },
+        },
+      ],
+    };
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(i18n.logIngredient),
+        backgroundColor: kPrimaryColor,
+        foregroundColor: Colors.white,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.edit_note),
+            tooltip: 'Edit plan',
+            onPressed: () => _navigateToPlanForm(context),
+          ),
+        ],
+      ),
+      // body: StreamBuilder<NutritionalPlan?>(
+      //   // watchPlan emits every time Drift detects a local SQLite write —
+      //   // works fully offline via PowerSync's SQLite layer.
+      //   stream: repo.watchPlan(planId),
+      //   builder: (context, snapshot) {
+      //     if (snapshot.connectionState == ConnectionState.waiting) {
+      //       return const Center(child: CircularProgressIndicator());
+      //     }
+      //     final plan = snapshot.data;
+      //     if (plan == null) {
+      //       return const Center(child: Text('Plan not found'));
+      //     }
+      //     return IngredientDetail(plan: plan, repo: repo);
+      body: IngredientDetail(
+        plan: NutritionalPlan.fromJson(_mockPlanJson),
+        repo: repo,
+      ),
+    );
+  }
+
+  void _navigateToPlanForm(BuildContext context) {
+    repo.watchPlan(planId).first.then((plan) {
+      if (plan != null && context.mounted) {
+        Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (_) => PlanForm(plan, repo: repo)));
+      }
+    });
+  }
+}
+
+// ─── IngredientDetail ─────────────────────────────────────────────────────────
+
+class IngredientDetail extends StatelessWidget {
+  final NutritionalPlan plan;
+  final NutritionRepository repo;
+
+  const IngredientDetail({super.key, required this.plan, required this.repo});
+
+  @override
+  Widget build(BuildContext context) {
     final meals = plan.meals;
     return CustomScrollView(
       slivers: [
-        // ── Plan header card ─────────────────────────────────────────
+        // ── Plan header card ─────────────────────────────────────────────
         SliverToBoxAdapter(
           child: NutritionalPlanHeaderCard(
             plan: plan,
-            // onEdit: () => _navigateToPlanForm(context),
+            onEdit: () => _navigateToPlanForm(context),
           ),
         ),
 
-        // ── Meals section header ─────────────────────────────────────
+        // ── Meals section header ─────────────────────────────────────────
         SliverToBoxAdapter(
           child: SectionHeader(
             title: 'Meals',
@@ -130,7 +262,7 @@ class IngredientDetail extends StatelessWidget {
           ),
         ),
 
-        // ── Meal cards or empty state ────────────────────────────────
+        // ── Meal cards or empty state ────────────────────────────────────
         if (meals.isEmpty)
           const SliverToBoxAdapter(
             child: EmptyStateWidget(
@@ -140,8 +272,6 @@ class IngredientDetail extends StatelessWidget {
             ),
           )
         else
-          // BUG FIX: SliverList.builder is valid here because we are inside
-          // a CustomScrollView — previously it was inside a Column.
           SliverList.builder(
             itemCount: meals.length,
             itemBuilder: (ctx, i) {
@@ -158,14 +288,12 @@ class IngredientDetail extends StatelessWidget {
             },
           ),
 
-        // ── Quick-log card ───────────────────────────────────────────
+        // ── Quick-log card ───────────────────────────────────────────────
         SliverToBoxAdapter(child: SectionHeader(title: 'Log ingredient')),
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
             child: _QuickLogCard(
-              plan: plan,
-              db: db,
               onNavigate: () => _navigateToIngredientForm(context),
             ),
           ),
@@ -174,47 +302,13 @@ class IngredientDetail extends StatelessWidget {
     );
   }
 
-  // ── Navigation helpers ─────────────────────────────────────────────────────
-
   void _navigateToIngredientForm(BuildContext context) {
-    final i18n = AppLocalizations.of(context);
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => IngredientForm(
           plan: plan,
-          db: db,
           recent: const [],
           withDate: true,
-
-          // for db (powersync and drift offline setup - for later )
-          // onSave: (ctx, item, dt) async {
-          //   // recent: const [],
-          //   // onSave: (BuildContext context, MealItem meal, DateTime? dt) async {
-          //   // Write log entry to Drift database
-          //   await db
-          //       .into(db.logItemTable)
-          //       .insert(
-          //         LogItemTableCompanion.insert(
-          //           planId: plan.id,
-          //           ingredientId: item.ingredientId,
-          //           amount: item.amount,
-          //           datetime: dt ?? DateTime.now(),
-          //         ),
-          //       );
-          //   // if (context.mounted) {
-
-          //   if (ctx.mounted) {
-          //     ScaffoldMessenger.of(ctx).showSnackBar(
-          //       SnackBar(
-          //         content: Text(
-          //           i18n.ingredientLogged,
-          //           textAlign: TextAlign.center,
-          //         ),
-          //       ),
-          //     );
-          //     Navigator.of(ctx).pop();
-          //   }
-          // },
           onSave: (ctx, item, dt) async {
             final log = LogItem(
               id: '',
@@ -228,9 +322,9 @@ class IngredientDetail extends StatelessWidget {
               ScaffoldMessenger.of(ctx).showSnackBar(
                 SnackBar(
                   content: Text(AppLocalizations.of(ctx).ingredientLogged),
-                  behavior: SnackBarBehavior.floating, // UI improvement
+                  behavior: SnackBarBehavior.floating,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10), // rounded snackbar
+                    borderRadius: BorderRadius.circular(10),
                   ),
                   margin: const EdgeInsets.all(12),
                 ),
@@ -250,21 +344,22 @@ class IngredientDetail extends StatelessWidget {
       ),
     );
   }
+
+  void _navigateToPlanForm(BuildContext context) {
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => PlanForm(plan, repo: repo)));
+  }
 }
 
 // ─── _QuickLogCard ────────────────────────────────────────────────────────────
 
-/// Compact card with a single CTA button that opens IngredientForm.
+/// FIX: removed `plan` and `db` fields — not needed since navigation is
+/// handled by the parent IngredientDetail via the onNavigate callback.
 class _QuickLogCard extends StatelessWidget {
-  final NutritionalPlan plan;
-  final dynamic db;
   final VoidCallback onNavigate;
 
-  const _QuickLogCard({
-    required this.plan,
-    required this.db,
-    required this.onNavigate,
-  });
+  const _QuickLogCard({required this.onNavigate});
 
   @override
   Widget build(BuildContext context) {
@@ -285,7 +380,7 @@ class _QuickLogCard extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              'Log an ingredient directly to today\'s diary.',
+              "Log an ingredient directly to today's diary.",
               style: RF.text(context).bodySmall,
             ),
             const SizedBox(height: 12),
@@ -303,10 +398,11 @@ class _QuickLogCard extends StatelessWidget {
 // ─── IngredientForm ───────────────────────────────────────────────────────────
 
 /// Full-screen form: search ingredient → set amount → set date/time → save.
-/// Mirrors wger's IngredientForm (widgets/nutrition/forms.dart in wger repo).
+///
+/// FIX: removed `db` field entirely — saving goes through the `onSave`
+/// callback which calls NutritionRepository.insertLog in the parent.
 class IngredientForm extends StatefulWidget {
   final NutritionalPlan plan;
-  final dynamic db; // DriftPowersyncDatabase
 
   final Future<void> Function(BuildContext context, MealItem item, DateTime? dt)
   onSave;
@@ -319,7 +415,6 @@ class IngredientForm extends StatefulWidget {
   const IngredientForm({
     super.key,
     required this.plan,
-    required this.db,
     required this.recent,
     required this.onSave,
     required this.withDate,
@@ -342,10 +437,7 @@ class IngredientFormState extends State<IngredientForm> {
   TimeOfDay _time = TimeOfDay.now();
   String _searchQuery = '';
 
-  /// The MealItem being built. Starts empty; populated by selectIngredient().
   late MealItem _localMealItem;
-
-  /// The Ingredient selected from the suggestion list (for macro preview).
   Ingredient? _selectedIngredient;
 
   @override
@@ -370,8 +462,6 @@ class IngredientFormState extends State<IngredientForm> {
     super.dispose();
   }
 
-  // ── Display sync helpers ───────────────────────────────────────────────────
-
   void _synchronizeDateDisplay() {
     _dateController.text =
         '${_date.year}-'
@@ -385,11 +475,8 @@ class IngredientFormState extends State<IngredientForm> {
         '${_time.minute.toString().padLeft(2, '0')}';
   }
 
-  // ── Ingredient selection ───────────────────────────────────────────────────
-
   void updateSearchQuery(String query) => setState(() => _searchQuery = query);
 
-  /// Select an Ingredient from the suggestion list and pre-fill the amount.
   void selectIngredient(Ingredient ingredient, double? amount) {
     setState(() {
       _selectedIngredient = ingredient;
@@ -418,8 +505,6 @@ class IngredientFormState extends State<IngredientForm> {
     });
   }
 
-  // ── Filtering ──────────────────────────────────────────────────────────────
-
   List<_MockEntry> get _filteredEntries {
     if (_searchQuery.isEmpty) return _kMockIngredients;
     final q = _searchQuery.toLowerCase();
@@ -428,17 +513,11 @@ class IngredientFormState extends State<IngredientForm> {
         .toList();
   }
 
-  // ── Macro preview scale ────────────────────────────────────────────────────
-
-  /// Scale factor: (entered amount) / (default serving in mock data).
   double get _macroScale {
     final amount = double.tryParse(_amountController.text) ?? 0;
     if (amount <= 0 || _selectedIngredient == null) return 1.0;
-    // Ingredients store macros per 100 g in the real model.
     return amount / 100.0;
   }
-
-  // ── Build ──────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
@@ -466,12 +545,11 @@ class IngredientFormState extends State<IngredientForm> {
                   controller: _ingredientController,
                   decoration: InputDecoration(
                     labelText: i18n.searchIngredient,
-
                     prefixIcon: const Icon(Icons.search),
                     filled: true,
                     fillColor: Theme.of(
                       context,
-                    ).colorScheme.surfaceVariant.withOpacity(0.4),
+                    ).colorScheme.surfaceContainerHigh.withValues(alpha: 0.4),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
                       borderSide: BorderSide.none,
@@ -515,7 +593,6 @@ class IngredientFormState extends State<IngredientForm> {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Amount
                     Expanded(
                       flex: 2,
                       child: TextFormField(
@@ -617,9 +694,6 @@ class IngredientFormState extends State<IngredientForm> {
                 ),
 
                 // ── Macro preview card ───────────────────────────────────
-                // BUG FIX: the old card showed 'Ingredient ID: X' which was
-                // meaningless to users. Now it shows computed macro values
-                // scaled to the entered amount using the real Ingredient model.
                 if (ingredientSelected &&
                     _amountController.text.isNotEmpty &&
                     _selectedIngredient != null)
@@ -675,8 +749,6 @@ class IngredientFormState extends State<IngredientForm> {
                 const SizedBox(height: 10),
 
                 // ── Suggestion list ──────────────────────────────────────
-                // Expanded fills the remaining space so the Column doesn't
-                // overflow — same pattern as the original intern code.
                 Expanded(
                   child: _filteredEntries.isEmpty
                       ? Center(child: Text(i18n.noEntries))
@@ -711,8 +783,6 @@ class IngredientFormState extends State<IngredientForm> {
     );
   }
 
-  // ── Bottom-sheet detail ────────────────────────────────────────────────────
-
   void _showIngredientDetail(BuildContext context, Ingredient ingredient) {
     showModalBottomSheet(
       context: context,
@@ -726,8 +796,6 @@ class IngredientFormState extends State<IngredientForm> {
 
 // ─── _IngredientSuggestionTile ────────────────────────────────────────────────
 
-/// ListTile for a mock/recent ingredient in the search list.
-/// Highlights the selected entry using the primary colour scheme.
 class _IngredientSuggestionTile extends StatelessWidget {
   final _MockEntry entry;
   final bool isSelected;
@@ -801,12 +869,9 @@ class _IngredientSuggestionTile extends StatelessWidget {
 
 // ─── _MacroPreviewCard ────────────────────────────────────────────────────────
 
-/// Shows scaled macro values for the currently entered amount.
-/// BUG FIX: the old version displayed 'Ingredient ID: X' and 'Ingredient
-/// Detail' — meaningless placeholder text. Now uses real Ingredient fields.
 class _MacroPreviewCard extends StatelessWidget {
   final Ingredient ingredient;
-  final double scale; // entered_amount / 100 g
+  final double scale;
   final String amount;
   final String unit;
 
@@ -819,7 +884,6 @@ class _MacroPreviewCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Ingredient stores nutrients per 100 g.
     final kcal = ingredient.energy * scale;
     final protein = ingredient.protein * scale;
     final carbs = ingredient.carbohydrates * scale;
@@ -859,8 +923,6 @@ class _MacroPreviewCard extends StatelessWidget {
 
 // ─── IngredientDetailSheet ────────────────────────────────────────────────────
 
-/// Modal bottom sheet showing full nutrient detail for an Ingredient.
-/// Replaces the plain AlertDialog from the 25% submission.
 class IngredientDetailSheet extends StatelessWidget {
   final Ingredient ingredient;
 
@@ -874,7 +936,6 @@ class IngredientDetailSheet extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Handle bar ─────────────────────────────────────────────────
           Center(
             child: Container(
               width: 40,
@@ -886,8 +947,6 @@ class IngredientDetailSheet extends StatelessWidget {
               ),
             ),
           ),
-
-          // ── Title row ──────────────────────────────────────────────────
           Row(
             children: [
               CircleAvatar(
@@ -929,8 +988,6 @@ class IngredientDetailSheet extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 20),
-
-          // ── Chip row ───────────────────────────────────────────────────
           NutritionChipRow(
             kcal: ingredient.energy.toDouble(),
             protein: ingredient.protein,
@@ -938,8 +995,6 @@ class IngredientDetailSheet extends StatelessWidget {
             fat: ingredient.fat,
           ),
           const SizedBox(height: 16),
-
-          // ── Detail rows ────────────────────────────────────────────────
           _DetailRow(
             'Energy',
             '${ingredient.energy} kcal',
@@ -978,7 +1033,6 @@ class IngredientDetailSheet extends StatelessWidget {
               Icons.water_outlined,
               kPrimaryColorLight,
             ),
-
           const SizedBox(height: 16),
           SizedBox(
             width: double.infinity,

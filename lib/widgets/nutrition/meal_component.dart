@@ -47,9 +47,15 @@ class _MealSummarySectionState extends State<MealSummarySection> {
         ? widget.meal.name
         : 'Unnamed Meal';
 
+    // previous fix (jun-05)
     // Meal.time is nullable TimeOfDay in the wger model.
     // realflutter stores it as a nullable String 'HH:mm'.
-    final mealTimeLabel = widget.meal.time ?? '';
+    // final mealTimeLabel = widget.meal.time ?? '';
+
+    // jun-06
+    final mealTimeLabel = widget.meal.time != null
+        ? '${widget.meal.time!.hour.toString().padLeft(2, '0')}:${widget.meal.time!.minute.toString().padLeft(2, '0')}'
+        : '';
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),

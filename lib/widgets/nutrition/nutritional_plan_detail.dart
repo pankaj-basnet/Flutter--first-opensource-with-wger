@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:realflutter/models/nutrition/nutritional_plan.dart';
 import 'package:realflutter/theme/theme.dart';
@@ -47,13 +46,15 @@ class NutritionalPlanHeaderCard extends StatelessWidget {
     final goalProtein = plan.goalProtein ?? 0.0;
     final goalCarbs = plan.goalCarbohydrates ?? 0.0;
     final goalFat = plan.goalFat ?? 0.0;
-    final hasGoals = goalKcal > 0 || goalProtein > 0 || goalCarbs > 0 || goalFat > 0;
+    final hasGoals =
+        goalKcal > 0 || goalProtein > 0 || goalCarbs > 0 || goalFat > 0;
 
     return Card(
       margin: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-      elevation: 3,shadowColor: kPrimaryColor.withValues(alpha: 0.18),         
-  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)), 
-  clipBehavior: Clip.antiAlias,
+      elevation: 3,
+      shadowColor: kPrimaryColor.withValues(alpha: 0.18),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      clipBehavior: Clip.antiAlias,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -75,14 +76,18 @@ class NutritionalPlanHeaderCard extends StatelessWidget {
                     children: [
                       Text(
                         _planLabel(),
-                        style: RF.text(context)
+                        style: RF
+                            .text(context)
                             .titleLarge
                             ?.copyWith(color: Colors.white),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         _dateRange(),
-                        style: RF.text(context).bodySmall?.copyWith(
+                        style: RF
+                            .text(context)
+                            .bodySmall
+                            ?.copyWith(
                               color: Colors.white70,
                               fontStyle: FontStyle.italic,
                             ),
@@ -131,7 +136,10 @@ class NutritionalPlanHeaderCard extends StatelessWidget {
               children: [
                 Text(
                   hasGoals ? 'Daily goals' : 'No goals set',
-                  style: RF.text(context).labelMedium?.copyWith(
+                  style: RF
+                      .text(context)
+                      .labelMedium
+                      ?.copyWith(
                         color: RF.primary(context),
                         fontWeight: FontWeight.bold,
                       ),
@@ -148,7 +156,10 @@ class NutritionalPlanHeaderCard extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     'Edit the plan to set daily macro targets.',
-                    style: RF.text(context).bodySmall?.copyWith(
+                    style: RF
+                        .text(context)
+                        .bodySmall
+                        ?.copyWith(
                           color: RF.onSurfaceVariant(context),
                           fontStyle: FontStyle.italic,
                         ),

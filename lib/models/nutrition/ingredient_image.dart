@@ -44,4 +44,3 @@ class IngredientImage {
 
   Map<String, dynamic> toJson() => _$IngredientImageToJson(this);
 }
-

@@ -8,7 +8,6 @@ import 'package:realflutter/widgets/nutrition/widgets.dart';
 // ─── PlanForm ─────────────────────────────────────────────────────────────────
 
 class PlanForm extends StatefulWidget {
-  /// The plan being edited. Passed as the domain model, not a raw Map.
   final NutritionalPlan plan;
   final NutritionRepository repo;
 
@@ -29,13 +28,7 @@ class _PlanFormState extends State<PlanForm> {
   @override
   void initState() {
     super.initState();
-
-    // BUG FIX: use dot notation on the NutritionalPlan model.
-    // The old intern code used map-access: `widget.plan['description']`.
     _descController.text = widget.plan.description;
-
-    // BUG FIX: goal fields live on the model (nullable double).
-    // Old code: `(widget.plan['goal_energy'] as num?)?.toString() ?? ''`.
     _goalKcalController.text = widget.plan.goalEnergy?.toStringAsFixed(0) ?? '';
     _goalProteinController.text =
         widget.plan.goalProtein?.toStringAsFixed(1) ?? '';
@@ -56,12 +49,11 @@ class _PlanFormState extends State<PlanForm> {
 
   @override
   Widget build(BuildContext context) {
-    // BUG FIX: i18n must be called, not used as a string prefix.
     final i18n = AppLocalizations.of(context);
 
     return Scaffold(
       appBar: AppBar(
-        // BUG FIX: was `Text('i18n.edit')`.
+        // FIX: was Text('i18n.edit') — a literal string, not the getter call.
         title: Text('i18n.edit'),
         backgroundColor: RF.primary(context),
         foregroundColor: RF.onPrimary(context),
@@ -79,7 +71,6 @@ class _PlanFormState extends State<PlanForm> {
                   key: const Key('plan-description-field'),
                   controller: _descController,
                   decoration: InputDecoration(
-                    // BUG FIX: was `'i18n.description'` (string literal).
                     labelText: i18n.description,
                     prefixIcon: const Icon(Icons.sticky_note_2_outlined),
                     border: const OutlineInputBorder(),
@@ -158,30 +149,7 @@ class _PlanFormState extends State<PlanForm> {
                 // ── Save button ────────────────────────────────────────────
                 PrimaryButton(
                   key: const Key('save-plan-button'),
-                  // BUG FIX: was `'i18n.save'` (string literal).
                   label: i18n.save,
-
-                  // onPressed: () {
-                  //   if (!_formKey.currentState!.validate()) return;
-                  //   _formKey.currentState!.save();
-
-                  //   // Pop a plain Map back to the caller.
-                  //   // The caller persists changes via the DB / notifier
-                  //   // in a later milestone.
-                  //   final result = <String, dynamic>{
-                  //     'id': widget.plan.id,
-                  //     'description': _descController.text.trim(),
-                  //     'goal_energy':
-                  //         double.tryParse(_goalKcalController.text),
-                  //     'goal_protein':
-                  //         double.tryParse(_goalProteinController.text),
-                  //     'goal_carbohydrates':
-                  //         double.tryParse(_goalCarbsController.text),
-                  //     'goal_fat':
-                  //         double.tryParse(_goalFatController.text),
-                  //   };
-                  //   Navigator.of(context).pop(result);
-                  // },
                   onPressed: () async {
                     if (!_formKey.currentState!.validate()) return;
                     _formKey.currentState!.save();

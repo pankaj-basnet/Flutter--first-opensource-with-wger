@@ -3177,7 +3177,8 @@ class IngredientWeightUnitTableCompanion
   }
 }
 
-class $MealTableTable extends MealTable with TableInfo<$MealTableTable, Meal> {
+class $MealTableTable extends MealTable
+    with TableInfo<$MealTableTable, mealdomain.Meal> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
@@ -3242,7 +3243,7 @@ class $MealTableTable extends MealTable with TableInfo<$MealTableTable, Meal> {
   static const String $name = 'nutrition_meal';
   @override
   VerificationContext validateIntegrity(
-    Insertable<Meal> instance, {
+    Insertable<mealdomain.Meal> instance, {
     bool isInserting = false,
   }) {
     final context = VerificationContext();
@@ -3276,9 +3277,9 @@ class $MealTableTable extends MealTable with TableInfo<$MealTableTable, Meal> {
   @override
   Set<GeneratedColumn> get $primaryKey => const {};
   @override
-  Meal map(Map<String, dynamic> data, {String? tablePrefix}) {
+  mealdomain.Meal map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return Meal(
+    return mealdomain.Meal.fromDrift(
       id: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}id'],
@@ -3287,9 +3288,9 @@ class $MealTableTable extends MealTable with TableInfo<$MealTableTable, Meal> {
         DriftSqlType.string,
         data['${effectivePrefix}plan_id'],
       )!,
-      order: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}order'],
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
       )!,
       time: $MealTableTable.$convertertimen.fromSql(
         attachedDatabase.typeMapping.read(
@@ -3297,9 +3298,9 @@ class $MealTableTable extends MealTable with TableInfo<$MealTableTable, Meal> {
           data['${effectivePrefix}time'],
         ),
       ),
-      name: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}name'],
+      order: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}order'],
       )!,
     );
   }
@@ -3315,118 +3316,7 @@ class $MealTableTable extends MealTable with TableInfo<$MealTableTable, Meal> {
       NullAwareTypeConverter.wrap($convertertime);
 }
 
-class Meal extends DataClass implements Insertable<Meal> {
-  final String id;
-  final String planId;
-  final int order;
-  final TimeOfDay? time;
-  final String name;
-  const Meal({
-    required this.id,
-    required this.planId,
-    required this.order,
-    this.time,
-    required this.name,
-  });
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    map['id'] = Variable<String>(id);
-    map['plan_id'] = Variable<String>(planId);
-    map['order'] = Variable<int>(order);
-    if (!nullToAbsent || time != null) {
-      map['time'] = Variable<String>(
-        $MealTableTable.$convertertimen.toSql(time),
-      );
-    }
-    map['name'] = Variable<String>(name);
-    return map;
-  }
-
-  MealTableCompanion toCompanion(bool nullToAbsent) {
-    return MealTableCompanion(
-      id: Value(id),
-      planId: Value(planId),
-      order: Value(order),
-      time: time == null && nullToAbsent ? const Value.absent() : Value(time),
-      name: Value(name),
-    );
-  }
-
-  factory Meal.fromJson(
-    Map<String, dynamic> json, {
-    ValueSerializer? serializer,
-  }) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return Meal(
-      id: serializer.fromJson<String>(json['id']),
-      planId: serializer.fromJson<String>(json['planId']),
-      order: serializer.fromJson<int>(json['order']),
-      time: serializer.fromJson<TimeOfDay?>(json['time']),
-      name: serializer.fromJson<String>(json['name']),
-    );
-  }
-  @override
-  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return <String, dynamic>{
-      'id': serializer.toJson<String>(id),
-      'planId': serializer.toJson<String>(planId),
-      'order': serializer.toJson<int>(order),
-      'time': serializer.toJson<TimeOfDay?>(time),
-      'name': serializer.toJson<String>(name),
-    };
-  }
-
-  Meal copyWith({
-    String? id,
-    String? planId,
-    int? order,
-    Value<TimeOfDay?> time = const Value.absent(),
-    String? name,
-  }) => Meal(
-    id: id ?? this.id,
-    planId: planId ?? this.planId,
-    order: order ?? this.order,
-    time: time.present ? time.value : this.time,
-    name: name ?? this.name,
-  );
-  Meal copyWithCompanion(MealTableCompanion data) {
-    return Meal(
-      id: data.id.present ? data.id.value : this.id,
-      planId: data.planId.present ? data.planId.value : this.planId,
-      order: data.order.present ? data.order.value : this.order,
-      time: data.time.present ? data.time.value : this.time,
-      name: data.name.present ? data.name.value : this.name,
-    );
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('Meal(')
-          ..write('id: $id, ')
-          ..write('planId: $planId, ')
-          ..write('order: $order, ')
-          ..write('time: $time, ')
-          ..write('name: $name')
-          ..write(')'))
-        .toString();
-  }
-
-  @override
-  int get hashCode => Object.hash(id, planId, order, time, name);
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      (other is Meal &&
-          other.id == this.id &&
-          other.planId == this.planId &&
-          other.order == this.order &&
-          other.time == this.time &&
-          other.name == this.name);
-}
-
-class MealTableCompanion extends UpdateCompanion<Meal> {
+class MealTableCompanion extends UpdateCompanion<mealdomain.Meal> {
   final Value<String> id;
   final Value<String> planId;
   final Value<int> order;
@@ -3449,7 +3339,7 @@ class MealTableCompanion extends UpdateCompanion<Meal> {
     this.name = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : planId = Value(planId);
-  static Insertable<Meal> custom({
+  static Insertable<mealdomain.Meal> custom({
     Expression<String>? id,
     Expression<String>? planId,
     Expression<int>? order,
@@ -4416,15 +4306,15 @@ final class $$NutritionalPlanTableTableReferences
     super.$_typedResult,
   );
 
-  static MultiTypedResultKey<$MealTableTable, List<Meal>> _mealTableRefsTable(
-    _$DriftPowersyncDatabase db,
-  ) => MultiTypedResultKey.fromTable(
-    db.mealTable,
-    aliasName: $_aliasNameGenerator(
-      db.nutritionalPlanTable.id,
-      db.mealTable.planId,
-    ),
-  );
+  static MultiTypedResultKey<$MealTableTable, List<mealdomain.Meal>>
+  _mealTableRefsTable(_$DriftPowersyncDatabase db) =>
+      MultiTypedResultKey.fromTable(
+        db.mealTable,
+        aliasName: $_aliasNameGenerator(
+          db.nutritionalPlanTable.id,
+          db.mealTable.planId,
+        ),
+      );
 
   $$MealTableTableProcessedTableManager get mealTableRefs {
     final manager = $$MealTableTableTableManager(
@@ -4878,7 +4768,7 @@ class $$NutritionalPlanTableTableTableManager
                         await $_getPrefetchedData<
                           NutritionalPlanTableData,
                           $NutritionalPlanTableTable,
-                          Meal
+                          mealdomain.Meal
                         >(
                           currentTable: table,
                           referencedTable: $$NutritionalPlanTableTableReferences
@@ -6806,7 +6696,12 @@ typedef $$MealTableTableUpdateCompanionBuilder =
     });
 
 final class $$MealTableTableReferences
-    extends BaseReferences<_$DriftPowersyncDatabase, $MealTableTable, Meal> {
+    extends
+        BaseReferences<
+          _$DriftPowersyncDatabase,
+          $MealTableTable,
+          mealdomain.Meal
+        > {
   $$MealTableTableReferences(super.$_db, super.$_table, super.$_typedResult);
 
   static $NutritionalPlanTableTable _planIdTable(_$DriftPowersyncDatabase db) =>
@@ -7060,14 +6955,14 @@ class $$MealTableTableTableManager
         RootTableManager<
           _$DriftPowersyncDatabase,
           $MealTableTable,
-          Meal,
+          mealdomain.Meal,
           $$MealTableTableFilterComposer,
           $$MealTableTableOrderingComposer,
           $$MealTableTableAnnotationComposer,
           $$MealTableTableCreateCompanionBuilder,
           $$MealTableTableUpdateCompanionBuilder,
-          (Meal, $$MealTableTableReferences),
-          Meal,
+          (mealdomain.Meal, $$MealTableTableReferences),
+          mealdomain.Meal,
           PrefetchHooks Function({bool planId, bool mealItemTableRefs})
         > {
   $$MealTableTableTableManager(
@@ -7164,7 +7059,11 @@ class $$MealTableTableTableManager
               getPrefetchedDataCallback: (items) async {
                 return [
                   if (mealItemTableRefs)
-                    await $_getPrefetchedData<Meal, $MealTableTable, MealItem>(
+                    await $_getPrefetchedData<
+                      mealdomain.Meal,
+                      $MealTableTable,
+                      MealItem
+                    >(
                       currentTable: table,
                       referencedTable: $$MealTableTableReferences
                           ._mealItemTableRefsTable(db),
@@ -7190,14 +7089,14 @@ typedef $$MealTableTableProcessedTableManager =
     ProcessedTableManager<
       _$DriftPowersyncDatabase,
       $MealTableTable,
-      Meal,
+      mealdomain.Meal,
       $$MealTableTableFilterComposer,
       $$MealTableTableOrderingComposer,
       $$MealTableTableAnnotationComposer,
       $$MealTableTableCreateCompanionBuilder,
       $$MealTableTableUpdateCompanionBuilder,
-      (Meal, $$MealTableTableReferences),
-      Meal,
+      (mealdomain.Meal, $$MealTableTableReferences),
+      mealdomain.Meal,
       PrefetchHooks Function({bool planId, bool mealItemTableRefs})
     >;
 typedef $$MealItemTableTableCreateCompanionBuilder =

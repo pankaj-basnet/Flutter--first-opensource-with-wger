@@ -34,7 +34,6 @@ class LogItem {
     );
   }
 
- 
   LogItem copyWith({
     String? id,
     String? planId,

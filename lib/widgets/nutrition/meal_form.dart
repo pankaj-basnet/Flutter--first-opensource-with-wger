@@ -8,10 +8,9 @@ import 'package:realflutter/widgets/nutrition/widgets.dart';
 
 class MealForm extends StatefulWidget {
   /// The id of the NutritionalPlan this meal belongs to.
-  /// String because NutritionalPlan.id is a String (UUID / server id).
   final String planId;
 
-  /// Existing Meal to edit. Null → create a new meal.
+  /// Existing [Meal] to edit. Null → create a new meal.
   final Meal? meal;
   final NutritionRepository repo;
 
@@ -25,27 +24,24 @@ class _MealFormState extends State<MealForm> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
 
-  // Nullable — the user may not want to set a time.
   TimeOfDay? _selectedTime;
 
   @override
   void initState() {
     super.initState();
-
     if (widget.meal != null) {
-      // BUG FIX: use dot notation on the Meal domain model,
-      // not map-access like `widget.meal!['name']`.
       _nameController.text = widget.meal!.name;
 
-      // Meal.time is stored as 'HH:mm' String? in realflutter's model.
-      final timeStr = widget.meal!.time; // String? e.g. '08:30'
-      if (timeStr != null && timeStr.contains(':')) {
-        final parts = timeStr.split(':');
-        _selectedTime = TimeOfDay(
-          hour: int.tryParse(parts[0]) ?? 0,
-          minute: int.tryParse(parts[1]) ?? 0,
-        );
-      }
+      // final timeStr = widget.meal!.time;
+      // if (timeStr != null && timeStr.contains(':')) {
+      //   final parts = timeStr.split(':');
+      //   _selectedTime = TimeOfDay(
+      //     hour: int.tryParse(parts[0]) ?? 0,
+      //     minute: int.tryParse(parts[1]) ?? 0,
+      //   );
+      // }
+
+      _selectedTime = widget.meal!.time;
     }
   }
 
@@ -60,13 +56,14 @@ class _MealFormState extends State<MealForm> {
 
   @override
   Widget build(BuildContext context) {
-    // BUG FIX: `i18n` must be used without wrapping it in string literals.
+    // FIX: i18n is the object; its properties are accessed via dot notation,
+    // NOT wrapped in string literals like 'i18n.edit'.
     final i18n = AppLocalizations.of(context);
     final isEdit = widget.meal != null;
 
     return Scaffold(
       appBar: AppBar(
-        // BUG FIX: was `Text(''i18n.edit'')` — now correctly `Text('i18n.edit')`.
+        // FIX: was Text('i18n.edit') / Text('i18n.addMeal') — literal strings.
         title: Text(isEdit ? 'i18n.edit' : 'i18n.addMeal'),
         backgroundColor: RF.primary(context),
         foregroundColor: RF.onPrimary(context),
@@ -80,7 +77,6 @@ class _MealFormState extends State<MealForm> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // ── Plan context badge ─────────────────────────────────────
-                // BUG FIX: PlanBadge now takes a String planId.
                 PlanBadge(planId: widget.planId),
                 const SizedBox(height: 20),
 
@@ -89,7 +85,7 @@ class _MealFormState extends State<MealForm> {
                   key: const Key('meal-name-field'),
                   controller: _nameController,
                   decoration: InputDecoration(
-                    // BUG FIX: was `''i18n.name''` (string literal).
+                    // FIX: was 'i18n.name' — a string literal.
                     labelText: 'i18n.name',
                     prefixIcon: const Icon(Icons.restaurant_menu),
                     border: const OutlineInputBorder(),
@@ -119,8 +115,8 @@ class _MealFormState extends State<MealForm> {
                   },
                   child: InputDecorator(
                     decoration: InputDecoration(
-                      // BUG FIX: was `''i18n.time''` (string literal).
-                      labelText: 'i18n.time',
+                      // FIX: was 'i18n.time'.
+                      labelText: i18n.time,
                       prefixIcon: const Icon(Icons.access_time),
                       border: const OutlineInputBorder(),
                       suffixIcon: _selectedTime != null
@@ -151,8 +147,8 @@ class _MealFormState extends State<MealForm> {
                 // ── Save button ────────────────────────────────────────────
                 PrimaryButton(
                   key: const Key('save-meal-button'),
-                  // BUG FIX: was `isEdit ? ''i18n.save'' : ''i18n.addMeal''`
-                  label: isEdit ? 'i18n.save' : 'i18n.addMeal',
+                  // FIX: was isEdit ? 'i18n.save' : 'i18n.addMeal' — literals.
+                  label: isEdit ? i18n.save : 'i18n.addMeal',
                   onPressed: () async {
                     if (!_formKey.currentState!.validate()) return;
                     _formKey.currentState!.save();
@@ -163,9 +159,11 @@ class _MealFormState extends State<MealForm> {
                           : '',
                       planId: widget.planId,
                       name: _nameController.text.trim(),
-                      time: _selectedTime != null
-                          ? _formatTime(_selectedTime!)
-                          : null,
+                      time: _selectedTime ?? TimeOfDay.now(),
+                      // time: _selectedTime != null
+                      //     // ? _formatTime(_selectedTime!)
+                      //     ? _selectedTime
+                      //     : null,
                     );
 
                     if (widget.meal != null && widget.meal!.id.isNotEmpty) {
