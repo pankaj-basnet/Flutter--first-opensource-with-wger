@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:realflutter/database/nutrition_repository.dart';
 import 'package:realflutter/l10n/generated/app_localizations.dart';
 import 'package:realflutter/models/nutrition/meal.dart';
 import 'package:realflutter/widgets/nutrition/widgets.dart';
@@ -12,8 +13,9 @@ class MealForm extends StatefulWidget {
 
   /// Existing Meal to edit. Null → create a new meal.
   final Meal? meal;
+  final NutritionRepository repo;
 
-  const MealForm(this.planId, {super.key, this.meal});
+  const MealForm(this.planId, {super.key, this.meal, required this.repo});
 
   @override
   State<MealForm> createState() => _MealFormState();
@@ -151,23 +153,28 @@ class _MealFormState extends State<MealForm> {
                   key: const Key('save-meal-button'),
                   // BUG FIX: was `isEdit ? ''i18n.save'' : ''i18n.addMeal''`
                   label: isEdit ? 'i18n.save' : 'i18n.addMeal',
-                  onPressed: () {
+                  onPressed: () async {
                     if (!_formKey.currentState!.validate()) return;
                     _formKey.currentState!.save();
 
-                    // Pop a plain Map back to the caller.
-                    // The caller (IngredientLogScreen) is responsible for
-                    // persisting via the DB / notifier in a later milestone.
-                    final result = <String, dynamic>{
-                      'planId': widget.planId,
-                      'name': _nameController.text.trim(),
-                      'time': _selectedTime != null
+                    final meal = Meal(
+                      id: (widget.meal?.id.isNotEmpty == true)
+                          ? widget.meal!.id
+                          : '',
+                      planId: widget.planId,
+                      name: _nameController.text.trim(),
+                      time: _selectedTime != null
                           ? _formatTime(_selectedTime!)
                           : null,
-                      if (isEdit && widget.meal!.id.isNotEmpty)
-                        'id': widget.meal!.id,
-                    };
-                    Navigator.of(context).pop(result);
+                    );
+
+                    if (widget.meal != null && widget.meal!.id.isNotEmpty) {
+                      await widget.repo.updateMeal(meal);
+                    } else {
+                      await widget.repo.insertMeal(meal);
+                    }
+
+                    if (mounted) Navigator.of(context).pop();
                   },
                 ),
               ],

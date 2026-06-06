@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:realflutter/database/nutrition_repository.dart';
 import 'package:realflutter/models/nutrition/meal.dart';
 import 'package:realflutter/models/nutrition/meal_item.dart';
 import 'package:realflutter/theme/theme.dart';
@@ -10,6 +11,7 @@ import 'package:realflutter/widgets/nutrition/widgets.dart';
 /// Mirrors wger's MealWidget (meal.dart) and MealHeader.
 class MealSummarySection extends StatefulWidget {
   final Meal meal;
+  final NutritionRepository repo;
   final VoidCallback? onAddIngredient;
   final VoidCallback? onEditMeal;
   final VoidCallback? onDeleteMeal;
@@ -17,6 +19,7 @@ class MealSummarySection extends StatefulWidget {
   const MealSummarySection({
     super.key,
     required this.meal,
+    required this.repo,
     this.onAddIngredient,
     this.onEditMeal,
     this.onDeleteMeal,
@@ -49,9 +52,9 @@ class _MealSummarySectionState extends State<MealSummarySection> {
     final mealTimeLabel = widget.meal.time ?? '';
 
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      elevation: 2,
+      margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+      elevation: 3,
       child: Column(
         children: [
           // ── Meal header ─────────────────────────────────────────────────
@@ -77,7 +80,7 @@ class _MealSummarySectionState extends State<MealSummarySection> {
             ),
             subtitle: Text(
               '${mealTimeLabel.isNotEmpty ? '$mealTimeLabel  ·  ' : ''}'
-              '${_totalKcal.toStringAsFixed(0)} kcal',
+              '${widget.meal.mealItems.length} item${widget.meal.mealItems.length == 1 ? '' : 's'}',
               style: RF
                   .text(context)
                   .bodySmall
@@ -132,7 +135,32 @@ class _MealSummarySectionState extends State<MealSummarySection> {
                     style: TextButton.styleFrom(
                       foregroundColor: kSecondaryColor,
                     ),
-                    onPressed: widget.onDeleteMeal,
+                    // onPressed: widget.onDeleteMeal,
+                    onPressed: () async {
+                      final confirm = await showDialog<bool>(
+                        context: context,
+                        builder: (_) => AlertDialog(
+                          title: const Text('Delete meal?'),
+                          content: Text(
+                            'This will also remove all items in "${widget.meal.name}".',
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, false),
+                              child: const Text('Cancel'),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, true),
+                              style: TextButton.styleFrom(
+                                foregroundColor: Colors.red,
+                              ),
+                              child: const Text('Delete'),
+                            ),
+                          ],
+                        ),
+                      );
+                      if (confirm == true) widget.onDeleteMeal?.call();
+                    },
                   ),
                 ],
               ),

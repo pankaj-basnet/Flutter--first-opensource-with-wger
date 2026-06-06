@@ -1,5 +1,5 @@
-
 import 'package:flutter/material.dart';
+import 'package:realflutter/database/nutrition_repository.dart';
 import 'package:realflutter/l10n/generated/app_localizations.dart';
 import 'package:realflutter/models/nutrition/nutritional_plan.dart';
 import 'package:realflutter/theme/theme.dart';
@@ -10,8 +10,9 @@ import 'package:realflutter/widgets/nutrition/widgets.dart';
 class PlanForm extends StatefulWidget {
   /// The plan being edited. Passed as the domain model, not a raw Map.
   final NutritionalPlan plan;
+  final NutritionRepository repo;
 
-  const PlanForm(this.plan, {super.key});
+  const PlanForm(this.plan, {super.key, required this.repo});
 
   @override
   State<PlanForm> createState() => _PlanFormState();
@@ -35,14 +36,12 @@ class _PlanFormState extends State<PlanForm> {
 
     // BUG FIX: goal fields live on the model (nullable double).
     // Old code: `(widget.plan['goal_energy'] as num?)?.toString() ?? ''`.
-    _goalKcalController.text =
-        widget.plan.goalEnergy?.toStringAsFixed(0) ?? '';
+    _goalKcalController.text = widget.plan.goalEnergy?.toStringAsFixed(0) ?? '';
     _goalProteinController.text =
         widget.plan.goalProtein?.toStringAsFixed(1) ?? '';
     _goalCarbsController.text =
         widget.plan.goalCarbohydrates?.toStringAsFixed(1) ?? '';
-    _goalFatController.text =
-        widget.plan.goalFat?.toStringAsFixed(1) ?? '';
+    _goalFatController.text = widget.plan.goalFat?.toStringAsFixed(1) ?? '';
   }
 
   @override
@@ -82,8 +81,7 @@ class _PlanFormState extends State<PlanForm> {
                   decoration: InputDecoration(
                     // BUG FIX: was `'i18n.description'` (string literal).
                     labelText: i18n.description,
-                    prefixIcon:
-                        const Icon(Icons.sticky_note_2_outlined),
+                    prefixIcon: const Icon(Icons.sticky_note_2_outlined),
                     border: const OutlineInputBorder(),
                   ),
                   maxLines: 2,
@@ -93,7 +91,10 @@ class _PlanFormState extends State<PlanForm> {
                 // ── Goals section ──────────────────────────────────────────
                 Text(
                   'Daily macro goals (optional)',
-                  style: RF.text(context).titleSmall?.copyWith(
+                  style: RF
+                      .text(context)
+                      .titleSmall
+                      ?.copyWith(
                         color: RF.primary(context),
                         fontWeight: FontWeight.bold,
                       ),
@@ -101,9 +102,10 @@ class _PlanFormState extends State<PlanForm> {
                 const SizedBox(height: 4),
                 Text(
                   'Leave blank to track without targets.',
-                  style: RF.text(context).bodySmall?.copyWith(
-                        color: RF.onSurfaceVariant(context),
-                      ),
+                  style: RF
+                      .text(context)
+                      .bodySmall
+                      ?.copyWith(color: RF.onSurfaceVariant(context)),
                 ),
                 const SizedBox(height: 12),
 
@@ -158,26 +160,44 @@ class _PlanFormState extends State<PlanForm> {
                   key: const Key('save-plan-button'),
                   // BUG FIX: was `'i18n.save'` (string literal).
                   label: i18n.save,
-                  onPressed: () {
+
+                  // onPressed: () {
+                  //   if (!_formKey.currentState!.validate()) return;
+                  //   _formKey.currentState!.save();
+
+                  //   // Pop a plain Map back to the caller.
+                  //   // The caller persists changes via the DB / notifier
+                  //   // in a later milestone.
+                  //   final result = <String, dynamic>{
+                  //     'id': widget.plan.id,
+                  //     'description': _descController.text.trim(),
+                  //     'goal_energy':
+                  //         double.tryParse(_goalKcalController.text),
+                  //     'goal_protein':
+                  //         double.tryParse(_goalProteinController.text),
+                  //     'goal_carbohydrates':
+                  //         double.tryParse(_goalCarbsController.text),
+                  //     'goal_fat':
+                  //         double.tryParse(_goalFatController.text),
+                  //   };
+                  //   Navigator.of(context).pop(result);
+                  // },
+                  onPressed: () async {
                     if (!_formKey.currentState!.validate()) return;
                     _formKey.currentState!.save();
 
-                    // Pop a plain Map back to the caller.
-                    // The caller persists changes via the DB / notifier
-                    // in a later milestone.
-                    final result = <String, dynamic>{
-                      'id': widget.plan.id,
-                      'description': _descController.text.trim(),
-                      'goal_energy':
-                          double.tryParse(_goalKcalController.text),
-                      'goal_protein':
-                          double.tryParse(_goalProteinController.text),
-                      'goal_carbohydrates':
-                          double.tryParse(_goalCarbsController.text),
-                      'goal_fat':
-                          double.tryParse(_goalFatController.text),
-                    };
-                    Navigator.of(context).pop(result);
+                    final updated = widget.plan.copyWith(
+                      description: _descController.text.trim(),
+                      goalEnergy: double.tryParse(_goalKcalController.text),
+                      goalProtein: double.tryParse(_goalProteinController.text),
+                      goalCarbohydrates: double.tryParse(
+                        _goalCarbsController.text,
+                      ),
+                      goalFat: double.tryParse(_goalFatController.text),
+                    );
+
+                    await widget.repo.updatePlan(updated);
+                    if (mounted) Navigator.of(context).pop();
                   },
                 ),
               ],

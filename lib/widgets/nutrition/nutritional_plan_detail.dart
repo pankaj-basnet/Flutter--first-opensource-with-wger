@@ -51,9 +51,9 @@ class NutritionalPlanHeaderCard extends StatelessWidget {
 
     return Card(
       margin: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-      elevation: 3,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      clipBehavior: Clip.antiAlias,
+      elevation: 3,shadowColor: kPrimaryColor.withValues(alpha: 0.18),         
+  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)), 
+  clipBehavior: Clip.antiAlias,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

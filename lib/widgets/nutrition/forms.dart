@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:realflutter/database/nutrition_repository.dart';
 import 'package:realflutter/database/powersync/database.dart' hide Meal;
 import 'package:realflutter/l10n/generated/app_localizations.dart';
 import 'package:realflutter/models/nutrition/ingredient.dart';
@@ -7,6 +8,7 @@ import 'package:realflutter/models/nutrition/log.dart';
 import 'package:realflutter/models/nutrition/meal.dart';
 import 'package:realflutter/models/nutrition/meal_item.dart';
 import 'package:realflutter/models/nutrition/nutritional_plan.dart';
+import 'package:realflutter/screens/ingredients_screen.dart';
 import 'package:realflutter/theme/theme.dart';
 import 'package:realflutter/widgets/nutrition/meal_component.dart';
 import 'package:realflutter/widgets/nutrition/meal_form.dart'
@@ -85,14 +87,20 @@ Widget getIngredientLogForm(
   // ignore: avoid_dynamic_calls
   dynamic db,
 ) {
-  return IngredientDetail(plan: plan, db: db);
+  return IngredientLogScreen(plan: plan, db: db);
 }
 
 class IngredientDetail extends StatelessWidget {
   final NutritionalPlan plan;
-  final dynamic db;
+  final NutritionRepository repo;
+  final dynamic db; // powersync
 
-  const IngredientDetail({super.key, required this.plan, this.db});
+  const IngredientDetail({
+    super.key,
+    required this.plan,
+    this.db,
+    required this.repo,
+  });
 
   // const IngredientDetail({super.key});
 
@@ -139,9 +147,13 @@ class IngredientDetail extends StatelessWidget {
             itemBuilder: (ctx, i) {
               final meal = meals[i];
               return MealSummarySection(
+                repo: repo,
                 meal: meal,
                 onAddIngredient: () => _navigateToIngredientForm(ctx),
                 onEditMeal: () => _navigateToMealForm(ctx, meal),
+                onDeleteMeal: () async {
+                  await repo.deleteMeal(meal.id);
+                },
               );
             },
           ),
@@ -173,29 +185,54 @@ class IngredientDetail extends StatelessWidget {
           db: db,
           recent: const [],
           withDate: true,
-          onSave: (ctx, item, dt) async {
-            // recent: const [],
-            // onSave: (BuildContext context, MealItem meal, DateTime? dt) async {
-            // Write log entry to Drift database
-            await db
-                .into(db.logItemTable)
-                .insert(
-                  LogItemTableCompanion.insert(
-                    planId: plan.id,
-                    ingredientId: item.ingredientId,
-                    amount: item.amount,
-                    datetime: dt ?? DateTime.now(),
-                  ),
-                );
-            // if (context.mounted) {
 
+          // for db (powersync and drift offline setup - for later )
+          // onSave: (ctx, item, dt) async {
+          //   // recent: const [],
+          //   // onSave: (BuildContext context, MealItem meal, DateTime? dt) async {
+          //   // Write log entry to Drift database
+          //   await db
+          //       .into(db.logItemTable)
+          //       .insert(
+          //         LogItemTableCompanion.insert(
+          //           planId: plan.id,
+          //           ingredientId: item.ingredientId,
+          //           amount: item.amount,
+          //           datetime: dt ?? DateTime.now(),
+          //         ),
+          //       );
+          //   // if (context.mounted) {
+
+          //   if (ctx.mounted) {
+          //     ScaffoldMessenger.of(ctx).showSnackBar(
+          //       SnackBar(
+          //         content: Text(
+          //           i18n.ingredientLogged,
+          //           textAlign: TextAlign.center,
+          //         ),
+          //       ),
+          //     );
+          //     Navigator.of(ctx).pop();
+          //   }
+          // },
+          onSave: (ctx, item, dt) async {
+            final log = LogItem(
+              id: '',
+              planId: plan.id,
+              ingredientId: item.ingredientId,
+              amount: item.amount,
+              datetime: dt ?? DateTime.now(),
+            );
+            await repo.insertLog(log);
             if (ctx.mounted) {
               ScaffoldMessenger.of(ctx).showSnackBar(
                 SnackBar(
-                  content: Text(
-                    i18n.ingredientLogged,
-                    textAlign: TextAlign.center,
+                  content: Text(AppLocalizations.of(ctx).ingredientLogged),
+                  behavior: SnackBarBehavior.floating, // UI improvement
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10), // rounded snackbar
                   ),
+                  margin: const EdgeInsets.all(12),
                 ),
               );
               Navigator.of(ctx).pop();
@@ -206,11 +243,12 @@ class IngredientDetail extends StatelessWidget {
     );
   }
 
-
   void _navigateToMealForm(BuildContext context, Meal? meal) {
-    Navigator.of(
-      context,
-    ).push(MaterialPageRoute(builder: (_) => MealForm(plan.id, meal: meal)));
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => MealForm(plan.id, meal: meal, repo: repo),
+      ),
+    );
   }
 }
 
@@ -428,8 +466,27 @@ class IngredientFormState extends State<IngredientForm> {
                   controller: _ingredientController,
                   decoration: InputDecoration(
                     labelText: i18n.searchIngredient,
+
                     prefixIcon: const Icon(Icons.search),
-                    border: const OutlineInputBorder(),
+                    filled: true,
+                    fillColor: Theme.of(
+                      context,
+                    ).colorScheme.surfaceVariant.withOpacity(0.4),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: BorderSide.none,
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: BorderSide.none,
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: BorderSide(
+                        color: Theme.of(context).colorScheme.primary,
+                        width: 1.5,
+                      ),
+                    ),
                     suffixIcon: _ingredientController.text.isNotEmpty
                         ? IconButton(
                             onPressed: () {
