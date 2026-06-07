@@ -7,6 +7,7 @@ import 'package:realflutter/l10n/generated/app_localizations.dart';
 import 'package:realflutter/models/nutrition/nutritional_plan.dart';
 import 'package:realflutter/theme/theme.dart';
 import 'package:realflutter/widgets/nutrition/forms.dart';
+import 'package:realflutter/database/nutrition_repository.dart';
 
 const String _kBackendBase = 'http://10.0.2.2:8000';
 
@@ -87,26 +88,91 @@ class _MyAppState extends State<MyApp> {
       //   NutritionalPlan.fromJson(_mockPlanJson),
       //   null, // Pass null to isolate the UI screens from database operations
       // ),
-      home: Consumer(
-        builder: (context, ref, _) {
-          final db = ref.read(driftPowerSyncDatabase);
-          // return getIngredientLogForm(snapshot.data!, db);
-          return getIngredientLogForm(
-            NutritionalPlan.fromJson(_mockPlanJson),
-            db,
-          );
-        },
-      ),
+      // ================================
+      // home: Consumer(
+      //   builder: (context, ref, _) {
+      //     final db = ref.read(driftPowerSyncDatabase);
+      //     // return getIngredientLogForm(snapshot.data!, db);
+      //     return getIngredientLogForm(
+      //       NutritionalPlan.fromJson(_mockPlanJson),
+      //       db,
+      //     );
+      //   },
+      // ),
+      // ================================
+      home: _DriftSeedingHome(planFuture: _planFuture),
     );
   }
 }
 
-class MainApp extends StatelessWidget {
-  const MainApp({super.key});
+// class MainApp extends StatelessWidget {
+//   const MainApp({super.key});
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return getIngredientLogForm(NutritionalPlan.fromJson(_mockPlanJson), null);
+//   }
+// }
+
+// ── _DriftSeedingHome ─────────────────────────────────────────────────────────
+//
+// Responsibilities:
+//   1. Wait for the plan to be loaded from REST / mock JSON
+//   2. Seed it into Drift (idempotent — safe to re-run)
+//   3. Hand off to IngredientLogScreen which streams from Drift
+//
+// Only this widget reads Riverpod (to get db). Nutrition widgets below it
+// receive NutritionRepository via constructor — no Riverpod imports needed.
+
+class _DriftSeedingHome extends ConsumerStatefulWidget {
+  final Future<NutritionalPlan> planFuture;
+
+  const _DriftSeedingHome({required this.planFuture});
+
+  @override
+  ConsumerState<_DriftSeedingHome> createState() => _DriftSeedingHomeState();
+}
+
+class _DriftSeedingHomeState extends ConsumerState<_DriftSeedingHome> {
+  late Future<String> _seededPlanIdFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _seededPlanIdFuture = _seedAndReturnId();
+  }
+
+  Future<String> _seedAndReturnId() async {
+    final db = ref.read(driftPowerSyncDatabase);
+    final repo = NutritionRepository(db);
+    final plan = await widget.planFuture;
+    await repo.seedPlanIfAbsent(plan);
+    return plan.id;
+  }
 
   @override
   Widget build(BuildContext context) {
-    return getIngredientLogForm(NutritionalPlan.fromJson(_mockPlanJson), null);
+    return FutureBuilder<String>(
+      future: _seededPlanIdFuture,
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+        if (snapshot.hasError) {
+          return Scaffold(
+            body: Center(child: Text('Startup error: ${snapshot.error}')),
+          );
+        }
+
+        final planId = snapshot.data!;
+        final db = ref.read(driftPowerSyncDatabase);
+        // From this point on: only planId travels down.
+        // The StreamBuilder in IngredientLogScreen handles reactivity.
+        return getIngredientLogForm(planId, db);
+      },
+    );
   }
 }
 

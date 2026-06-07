@@ -96,6 +96,35 @@ class NutritionRepository {
     )..where((t) => t.id.equals(planId))).go();
   }
 
+  // ── Seeding (first-launch + offline fallback) ─────────────────────────────
+
+  /// Inserts [plan] (with all its meals and meal items) into the local
+  /// Drift database only if a row with the same [plan.id] does not already
+  /// exist. Safe to call on every app launch — it is idempotent.
+  ///
+  ///   1. insertPlan  → writes the plan row
+  ///   2. insertMeal  → writes each meal row (FK: plan_id)
+  ///   3. insertMealItem → writes each item row (FK: meal_id)
+  Future<void> seedPlanIfAbsent(NutritionalPlan plan) async {
+    // Check if plan row already exists
+    final existing = await (_db.select(
+      _db.nutritionalPlanTable,
+    )..where((t) => t.id.equals(plan.id))).getSingleOrNull();
+
+    if (existing != null) return;
+
+    // Insert the plan row
+    await insertPlan(plan);
+
+    // Insert each meal and its items
+    for (final meal in plan.meals) {
+      await insertMeal(meal);
+      for (final item in meal.mealItems) {
+        await insertMealItem(item);
+      }
+    }
+  }
+
   // ── Meal ──────────────────────────────────────────────────────────────────
 
   /// Live stream of meals for a plan; each meal includes its items.
@@ -209,8 +238,8 @@ class NutritionRepository {
     goalProtein: row.goalProtein?.toDouble(),
     goalCarbohydrates: row.goalCarbohydrates?.toDouble(),
     goalFat: row.goalFat?.toDouble(),
-    creationDate: row.creationDate.toString(),
-    endDate: row.endDate.toString(),
+    creationDate: row.creationDate.toIso8601String(),
+    endDate: row.endDate?.toIso8601String(), 
   );
 
   // FIX: row type is MealTableData. MealTable uses @UseRowClass(Meal) so

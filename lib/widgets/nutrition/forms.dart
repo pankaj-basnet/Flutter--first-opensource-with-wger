@@ -10,11 +10,9 @@ import 'package:realflutter/models/nutrition/meal_item.dart';
 import 'package:realflutter/models/nutrition/nutritional_plan.dart';
 import 'package:realflutter/theme/theme.dart';
 import 'package:realflutter/widgets/nutrition/meal_component.dart';
-import 'package:realflutter/widgets/nutrition/meal_form.dart'
-    hide NutritionalPlan;
+import 'package:realflutter/widgets/nutrition/meal_form.dart';
 import 'package:realflutter/widgets/nutrition/nutritional_plan_detail.dart';
-import 'package:realflutter/widgets/nutrition/plan_form.dart'
-    hide NutritionalPlan;
+import 'package:realflutter/widgets/nutrition/plan_form.dart';
 import 'package:realflutter/widgets/nutrition/widgets.dart';
 
 const _kMockIngredients = [
@@ -85,11 +83,16 @@ class _MockEntry {
 //   return IngredientLogScreen(planId: plan.id, repo: repo);
 // }
 
-Widget getIngredientLogForm(NutritionalPlan plan, dynamic? db) {
-  // If db is null, pass a null or mock repository instance down safely
-  final repo = db != null ? NutritionRepository(db) : null;
-  // Return your root log form widget with the nullable repository reference
-  return IngredientLogScreen(planId: plan.id, repo: repo!);
+// Widget getIngredientLogForm(NutritionalPlan plan, dynamic? db) {
+//   // If db is null, pass a null or mock repository instance down safely
+//   final repo = db != null ? NutritionRepository(db) : null;
+//   // Return your root log form widget with the nullable repository reference
+//   return IngredientLogScreen(planId: plan.id, repo: repo!);
+// }
+
+Widget getIngredientLogForm(String planId, DriftPowersyncDatabase db) {
+  final repo = NutritionRepository(db);
+  return IngredientLogScreen(planId: planId, repo: repo);
 }
 
 // ─── IngredientLogScreen ──────────────────────────────────────────────────────
@@ -110,80 +113,6 @@ class IngredientLogScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final i18n = AppLocalizations.of(context);
-
-    // - Mock plan JSON -
-    const _mockPlanJson = {
-      'id': 'plan-uuid-001',
-      'name': 'Lean Bulk Plan',
-      'meals': [
-        {
-          'id': 'meal-uuid-001',
-          'name': 'Breakfast',
-          'time': '08:00',
-          'mealItems': [
-            {
-              'id': 'item-uuid-001',
-              'ingredientId': 101,
-              'amount': 100,
-              'ingredient': {
-                'id': 101,
-                'name': 'Oatmeal',
-                'energy': 389,
-                'protein': 13,
-                'carbohydrates': 66,
-                'fat': 7,
-              },
-            },
-          ],
-        },
-        {
-          'id': 'meal-uuid-002',
-          'name': 'Snacks',
-          'time': '10:00',
-          'mealItems': [
-            {
-              'id': 'item-uuid-002',
-              'ingredientId': 104,
-              'amount': 100,
-              'ingredient': {
-                'id': 104,
-                'name': 'juice',
-                'energy': 285,
-                'protein': 13,
-                'carbohydrates': 66,
-                'fat': 7,
-              },
-            },
-          ],
-        },
-      ],
-      'diaryEntries': [
-        {
-          'planId': 'plan-uuid-001',
-          'mealId': 'meal-uuid-001',
-          'datetime': '2026-06-03T08:00:00Z',
-          'mealItem': {
-            'id': 'item-uuid-001',
-            'mealId': 'meal-uuid-001',
-            'ingredientId': 101,
-            'amount': 100,
-            'ingredient': {
-              'id': 101,
-              'name': 'Oatmeal (History Mock)',
-              'created': '2026-06-03T12:00:00Z',
-              'energy': 389,
-              'carbohydrates': '66.0',
-              'protein': '13.0',
-              'fat': '7.0',
-              'is_vegan': true,
-              'is_vegetarian': true,
-              'nutriscore': 'a',
-              'weight_units': [],
-            },
-          },
-        },
-      ],
-    };
 
     return Scaffold(
       appBar: AppBar(
@@ -211,9 +140,33 @@ class IngredientLogScreen extends StatelessWidget {
       //       return const Center(child: Text('Plan not found'));
       //     }
       //     return IngredientDetail(plan: plan, repo: repo);
-      body: IngredientDetail(
-        plan: NutritionalPlan.fromJson(_mockPlanJson),
-        repo: repo,
+      // =====================================
+      // body: IngredientDetail(
+      //   plan: NutritionalPlan.fromJson(_mockPlanJson),
+      //   repo: repo,
+      // ),
+      // =====================================
+      body: StreamBuilder<NutritionalPlan?>(
+        // Drift emits a new value every time any write touches the plan,
+        // its meals, or their items — works fully offline via PowerSync SQLite.
+        stream: repo.watchPlan(planId),
+        builder: (context, snapshot) {
+          // Still initializing the Drift connection
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          // Plan not found in DB (shouldn't happen after seed, but safe)
+          final plan = snapshot.data;
+          if (plan == null) {
+            return const Center(
+              child: EmptyStateWidget(
+                icon: Icons.no_meals_outlined,
+                message: 'No plan found. Please restart the app.',
+              ),
+            );
+          }
+          return IngredientDetail(plan: plan, repo: repo);
+        },
       ),
     );
   }
