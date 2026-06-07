@@ -1,4 +1,5 @@
 import 'package:drift/drift.dart';
+import 'package:flutter/material.dart';
 import 'package:realflutter/database/powersync/database.dart';
 import 'package:uuid/uuid.dart';
 import 'package:realflutter/models/nutrition/nutritional_plan.dart';
@@ -12,9 +13,6 @@ class NutritionRepository {
   final DriftPowersyncDatabase _db;
   NutritionRepository(this._db);
 
-  // ── NutritionalPlan ───────────────────────────────────────────────────────
-
-  /// Stream of all plans — UI rebuilds automatically on any change.
   Stream<List<NutritionalPlan>> watchAllPlans() {
     return (_db.select(_db.nutritionalPlanTable)
           ..orderBy([(t) => OrderingTerm.desc(t.creationDate)]))
@@ -22,7 +20,6 @@ class NutritionRepository {
         .map((rows) => rows.map(_planFromRow).toList());
   }
 
-  /// Stream of one plan with all its meals + items (fully populated).
   Stream<NutritionalPlan?> watchPlan(String planId) {
     return (_db.select(_db.nutritionalPlanTable)
           ..where((t) => t.id.equals(planId)))
@@ -35,22 +32,16 @@ class NutritionRepository {
   }
 
   Future<void> insertPlan(NutritionalPlan plan) async {
-    // FIX: Companion class was misspelled as NunutritionalPlanTableCompanion.
-    //      Correct generated name is NutritionalPlanTableCompanion.
-    // FIX: goalEnergy/goalProtein/goalCarbohydrates/goalFat are IntColumn in
-    //      the DB table but nullable double on the domain model — cast to int?.
     await _db
         .into(_db.nutritionalPlanTable)
         .insertOnConflictUpdate(
           NutritionalPlanTableCompanion(
-            id: Value(plan.id.isEmpty ? _uuid.v4() : plan.id),
+            id: Value(plan.id.isEmpty ? _uuid.v7() : plan.id),
             description: Value(plan.description),
             goalEnergy: Value(plan.goalEnergy?.toInt()),
             goalProtein: Value(plan.goalProtein?.toInt()),
             goalCarbohydrates: Value(plan.goalCarbohydrates?.toInt()),
             goalFat: Value(plan.goalFat?.toInt()),
-            // creationDate / endDate: the table column is DateTimeColumn but
-            // the domain model stores them as nullable String.  We parse safely.
             creationDate: Value(
               plan.creationDate is DateTime
                   ? plan.creationDate as DateTime
@@ -62,7 +53,6 @@ class NutritionRepository {
                   ? DateTime.tryParse(plan.endDate.toString())
                   : null,
             ),
-            // Required non-nullable columns — provide safe defaults.
             onlyLogging: const Value(false),
             startDate: Value(DateTime.now()),
             hasGoalCalories: const Value(false),
@@ -71,7 +61,6 @@ class NutritionRepository {
   }
 
   Future<void> updatePlan(NutritionalPlan plan) async {
-    // FIX: same companion name + int cast.
     await (_db.update(
       _db.nutritionalPlanTable,
     )..where((t) => t.id.equals(plan.id))).write(
@@ -96,11 +85,9 @@ class NutritionRepository {
     )..where((t) => t.id.equals(planId))).go();
   }
 
-  // ── Meal ──────────────────────────────────────────────────────────────────
+  // -- Meals --
 
-  /// Live stream of meals for a plan; each meal includes its items.
   Stream<List<mealdomain.Meal>> watchMealsForPlan(String planId) {
-    // FIX: accessor is mealTable (singular), matching the @DriftDatabase list.
     return (_db.select(
       _db.mealTable,
     )..where((t) => t.planId.equals(planId))).watch().asyncMap((rows) async {
@@ -114,13 +101,13 @@ class NutritionRepository {
   }
 
   Future<void> insertMeal(mealdomain.Meal meal) async {
-    // FIX: accessor is mealTable; companion is MealTableCompanion.
+    final finalId = meal.id.isNotEmpty ? meal.id : _uuid.v7();
     await _db
         .into(_db.mealTable)
-        .insertOnConflictUpdate(
-          MealTableCompanion(
-            id: Value(meal.id.isEmpty ? _uuid.v4() : meal.id),
-            planId: Value(meal.planId),
+        .insert(
+          MealTableCompanion.insert(
+            id: Value(finalId),
+            planId: meal.planId,
             name: Value(meal.name),
             time: Value(meal.time),
             order: Value(meal.order),
@@ -139,27 +126,27 @@ class NutritionRepository {
   }
 
   Future<void> deleteMeal(String mealId) async {
-    // Cascade: delete items first, then the meal row.
-    await (_db.delete(
-      _db.mealItemTable,
-    )..where((t) => t.mealId.equals(mealId))).go();
-    await (_db.delete(_db.mealTable)..where((t) => t.id.equals(mealId))).go();
+    await _db.transaction(() async {
+      await (_db.delete(
+        _db.mealItemTable,
+      )..where((t) => t.mealId.equals(mealId))).go();
+      await (_db.delete(_db.mealTable)..where((t) => t.id.equals(mealId))).go();
+    });
   }
 
-  // ── MealItem ──────────────────────────────────────────────────────────────
-
+  // -- MealItem --
   Future<void> insertMealItem(MealItem item) async {
-    // FIX: accessor is mealItemTable; companion is MealItemTableCompanion.
+    final finalId = item.id.isNotEmpty ? item.id : _uuid.v7();
     await _db
         .into(_db.mealItemTable)
-        .insertOnConflictUpdate(
-          MealItemTableCompanion(
-            id: Value(item.id.isEmpty ? _uuid.v4() : item.id),
-            mealId: Value(item.mealId),
-            ingredientId: Value(item.ingredientId),
+        .insert(
+          MealItemTableCompanion.insert(
+            id: Value(finalId),
+            mealId: item.mealId,
+            ingredientId: item.ingredientId,
             weightUnitId: Value(item.weightUnitId),
-            amount: Value(item.amount),
             order: Value(item.order),
+            amount: item.amount,
           ),
         );
   }
@@ -170,9 +157,8 @@ class NutritionRepository {
     )..where((t) => t.id.equals(itemId))).go();
   }
 
-  // ── LogItem ───────────────────────────────────────────────────────────────
+  // -- LogItem --
 
-  /// Live stream of log entries for a plan, newest first.
   Stream<List<LogItem>> watchLogsForPlan(String planId) {
     return (_db.select(_db.logItemTable)
           ..where((t) => t.planId.equals(planId))
@@ -182,12 +168,11 @@ class NutritionRepository {
   }
 
   Future<void> insertLog(LogItem log) async {
-    // FIX: accessor is logItemTable; companion is LogItemTableCompanion.
     await _db
         .into(_db.logItemTable)
         .insertOnConflictUpdate(
           LogItemTableCompanion(
-            id: Value(log.id.isEmpty ? _uuid.v4() : log.id),
+            id: Value(log.id.isEmpty ? _uuid.v7() : log.id),
             planId: Value(log.planId),
             mealId: Value(log.mealId),
             ingredientId: Value(log.ingredientId),
@@ -198,10 +183,178 @@ class NutritionRepository {
         );
   }
 
-  // ── Private mappers ───────────────────────────────────────────────────────
+  Future<String> seedHardcodedInitialPlans() {
+    _db.transaction<String>(() {
+      final currentPlans = _db.select(_db.nutritionalPlanTable).get();
+      // if (currentPlans.isNotEmpty) return;
 
-  // FIX: row type is NutritionalPlanTableData (generated from NutritionalPlanTable).
-  // goalEnergy etc. are int? in the DB row; domain model expects double?.
+      final nowUtc = DateTime.now().toUtc();
+
+      // PLAN 1: Lean Bulk
+      final plan1Id = 'plan-uuid-001';
+      _db
+          .into(_db.nutritionalPlanTable)
+          .insert(
+            NutritionalPlanTableCompanion.insert(
+              id: Value(plan1Id),
+              description: 'Lean Bulk Plan',
+              creationDate: nowUtc,
+              startDate: nowUtc,
+              onlyLogging: false,
+              hasGoalCalories: false,
+              goalEnergy: const Value(3200),
+              goalProtein: const Value(180),
+              goalCarbohydrates: const Value(400),
+              goalFat: const Value(90),
+            ),
+          );
+
+      _db
+          .into(_db.ingredientTable)
+          .insertOnConflictUpdate(
+            IngredientTableCompanion.insert(
+              id: (101),
+              name: 'Oatmeal',
+              languageId: 2,
+              created: nowUtc,
+              energy: 389,
+              carbohydrates: 66.0,
+              protein: 13.0,
+              fat: 7.0,
+            ),
+          );
+
+      _db
+          .into(_db.ingredientTable)
+          .insertOnConflictUpdate(
+            IngredientTableCompanion.insert(
+              id: (104),
+              name: 'Juice',
+              languageId: 2,
+              created: nowUtc,
+              energy: 285,
+              carbohydrates: 66.0,
+              protein: 13.0,
+              fat: 7.0,
+            ),
+          );
+
+      final p1Meal1Id = 'meal-uuid-001';
+      _db
+          .into(_db.mealTable)
+          .insert(
+            MealTableCompanion.insert(
+              id: Value(p1Meal1Id),
+              planId: plan1Id,
+              name: Value('Breakfast'),
+              time: const Value(TimeOfDay(hour: 8, minute: 0)),
+              order: const Value(1),
+            ),
+          );
+
+      _db
+          .into(_db.mealItemTable)
+          .insert(
+            MealItemTableCompanion.insert(
+              id: Value(_uuid.v7()),
+              mealId: p1Meal1Id,
+              ingredientId: 101,
+              amount: 100.0,
+              order: const Value(1),
+            ),
+          );
+
+      final p1Meal2Id = 'meal-uuid-002';
+      _db
+          .into(_db.mealTable)
+          .insert(
+            MealTableCompanion.insert(
+              id: Value(p1Meal2Id),
+              planId: plan1Id,
+              name: Value('Snacks'),
+              time: const Value(TimeOfDay(hour: 10, minute: 0)),
+              order: const Value(2),
+            ),
+          );
+
+      _db
+          .into(_db.mealItemTable)
+          .insert(
+            MealItemTableCompanion.insert(
+              id: Value(_uuid.v7()),
+              mealId: p1Meal2Id,
+              ingredientId: 104,
+              amount: 100.0,
+              order: const Value(1),
+            ),
+          );
+
+      // PLAN 2: Cutting
+      final plan2Id = 'plan-uuid-002';
+      _db
+          .into(_db.nutritionalPlanTable)
+          .insert(
+            NutritionalPlanTableCompanion.insert(
+              id: Value(plan2Id),
+              description: 'Keto Shred Protocol',
+              creationDate: nowUtc,
+              startDate: nowUtc,
+              onlyLogging: false,
+              hasGoalCalories: false,
+              goalEnergy: const Value(1800),
+              goalProtein: const Value(160),
+              goalCarbohydrates: const Value(30),
+              goalFat: const Value(120),
+            ),
+          );
+
+      _db
+          .into(_db.ingredientTable)
+          .insertOnConflictUpdate(
+            IngredientTableCompanion.insert(
+              id: (202),
+              name: 'Grilled Chicken Breast',
+              languageId: 2,
+              created: nowUtc,
+              energy: 165,
+              carbohydrates: 0.0,
+              protein: 31.0,
+              fat: 3.6,
+            ),
+          );
+
+      final p2Meal1Id = 'meal-uuid-201';
+      _db
+          .into(_db.mealTable)
+          .insert(
+            MealTableCompanion.insert(
+              id: Value(p2Meal1Id),
+              planId: plan2Id,
+              name: Value('Main Lunch Feeding'),
+              time: const Value(TimeOfDay(hour: 13, minute: 15)),
+              order: const Value(1),
+            ),
+          );
+
+      _db
+          .into(_db.mealItemTable)
+          .insert(
+            MealItemTableCompanion.insert(
+              id: Value(_uuid.v7()),
+              mealId: p2Meal1Id,
+              ingredientId: 202,
+              amount: 250.0,
+              order: const Value(1),
+            ),
+          );
+      return Future.value('temp');
+    });
+
+    // return 'temp';
+    return Future.value('temp');
+  }
+
+  // Mappers
   NutritionalPlan _planFromRow(NutritionalPlanTableData row) => NutritionalPlan(
     id: row.id,
     description: row.description,
@@ -213,74 +366,12 @@ class NutritionRepository {
     endDate: row.endDate.toString(),
   );
 
-  // FIX: row type is MealTableData. MealTable uses @UseRowClass(Meal) so
-  // Drift already returns Meal directly — but we also accept raw row data here
-  // to attach the separately-fetched items list.
-  // Meal _mealFromRow(MealTableData row, List<MealItem> items) => Meal(
-  //       id: row.id,
-  //       planId: row.planId,
-  //       name: row.name,
-  //       time: row.time,
-  //       mealItems: items,
-  //       order: row.order,
-  //     );
-  // D:\src_dev\flutter\F-fowd--realworld-wger-\may29-\CODE-\realflutter\lib\database\nutrition_repository.dart
-
-  // ---
-
-  //     D:\src_dev\flutter\F-fowd--realworld-wger-\may29-\CODE-\realflutter\lib\database\powersync\database.g.dart
-  // typedef $$MealTableTableCreateCompanionBuilder =
-  //     MealTableCompanion Function({
-  //       Value<String> id,
-  //       required String planId,
-  //       Value<int> order,
-  //       Value<TimeOfDay?> time,
-  //       Value<String> name,
-  //       Value<int> rowid,
-  //     });
-  // typedef $$MealTableTableUpdateCompanionBuilder =
-  //     MealTableCompanion Function({
-  //       Value<String> id,
-  //       Value<String> planId,
-  //       Value<int> order,
-  //       Value<TimeOfDay?> time,
-  //       Value<String> name,
-  //       Value<int> rowid,
-  //     });
-
-  // final class $$MealTableTableReferences
-  //     extends
-  //         BaseReferences<
-  //           _$DriftPowersyncDatabase,
-  //           $MealTableTable,
-  //           mealdomain.Meal
-  //         > {
-  //   $$MealTableTableReferences(super.$_db, super.$_table, super.$_typedResult);
-
-  //   static $NutritionalPlanTableTable _planIdTable(_$DriftPowersyncDatabase db) =>
-  //       db.nutritionalPlanTable.createAlias(
-  //         $_aliasNameGenerator(db.mealTable.planId, db.nutritionalPlanTable.id),
-  //       );
-
-  // Undefined class 'Meal'.
-
-  mealdomain.Meal _mealWithItems(mealdomain.Meal row, List<MealItem> items) =>
-      row.copyWith(mealItems: items);
-
-  // FIX: row type is MealItemTableData.
-  // MealItem _itemFromRow(MealItemTableData row) => MealItem(
-  // MealItem _itemFromRow(MealItemTableCompanion row) => MealItem(
-  //       id: row.id,
-  //       mealId: row.mealId,
-  //       ingredientId: row.ingredientId,
-  //       weightUnitId: row.weightUnitId,
-  //       amount: row.amount,
-  //       order: row.order,
-  //     );
+  mealdomain.Meal _mealWithItems(mealdomain.Meal row, List<MealItem> items) {
+    return row.copyWith(mealItems: items);
+  }
 
   MealItem _itemFromRow(MealItem row) => row;
 
-  // FIX: row type is LogItemTableData.
   LogItem _logFromRow(LogItemTableData row) => LogItem(
     id: row.id,
     planId: row.planId,
